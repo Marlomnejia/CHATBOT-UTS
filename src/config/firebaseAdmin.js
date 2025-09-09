@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 
-// Carga las credenciales que descargaste
-const serviceAccount = require('../../serviceAccountKey.json');
+// Parsea las credenciales desde la variable de entorno
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
