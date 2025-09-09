@@ -1,86 +1,84 @@
-const loginForm = document.getElementById('login-form');
-const errorMessage = document.getElementById('error-message');
-const togglePassword = document.querySelector('.toggle-password');
-const passwordInput = document.getElementById('password');
-const googleSignInBtn = document.getElementById('google-signin-btn');
-const auth = firebase.auth();
+// src/public/js/login.js
 
-// --- LOGIN CON GOOGLE (MÉTODO POP-UP FINAL) ---
-googleSignInBtn.addEventListener('click', () => {
-    errorMessage.textContent = '';
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-        .then(async (result) => {
-            const token = await result.user.getIdToken();
-            localStorage.setItem('authToken', token);
+document.addEventListener('DOMContentLoaded', () => {
+    // Obteniendo elementos del DOM
+    const loginForm = document.getElementById('login-form');
+    const errorMessage = document.getElementById('error-message');
+    const togglePassword = document.querySelector('.toggle-password');
+    const passwordInput = document.getElementById('password');
 
-            // Informar a nuestro backend sobre el inicio de sesión
-            await fetch('/api/auth/google-signin', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+    // Maneja el login con email y contraseña
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-            // Redirigir al panel
-            await redirectToPanel(token);
-        })
-        .catch((error) => {
-            // Manejar errores comunes del pop-up
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage.textContent = 'El inicio de sesión fue cancelado.';
-            } else {
-                errorMessage.textContent = 'Error al iniciar sesión con Google.';
+            // Limpia mensajes de error anteriores
+            if (errorMessage) {
+                errorMessage.textContent = '';
+            }
+
+            const email = event.target.email.value;
+            const password = event.target.password.value;
+
+            try {
+                // Envía la solicitud de login a tu backend
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    console.log('Login exitoso:', data);
+                    // Guarda el token y el userId en el almacenamiento local
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userId', data.userId);
+
+                    // Redirección inteligente basada en el rol
+                    const profileResponse = await fetch('/api/auth/me', {
+                        headers: { 
+                            'Authorization': `Bearer ${data.token}`,
+                            'X-User-Id': data.userId
+                        }
+                    });
+
+                    if (!profileResponse.ok) {
+                        throw new Error('No se pudo verificar el perfil del usuario.');
+                    }
+
+                    const profileData = await profileResponse.json();
+                    if (profileData.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/chat.html';
+                    }
+
+                } else {
+                    // Muestra el mensaje de error del backend
+                    if (errorMessage) {
+                        errorMessage.textContent = data.message;
+                    } else {
+                        console.error('Error de login:', data.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Error en la solicitud:', error);
+                if (errorMessage) {
+                    errorMessage.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                }
             }
         });
-});
-
-// --- LOGIN CON CORREO Y CONTRASEÑA ---
-loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    errorMessage.textContent = '';
-    const email = event.target.email.value;
-    const password = event.target.password.value;
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        if (!userCredential.user.emailVerified) {
-            auth.signOut();
-            throw new Error("Por favor, verifica tu correo electrónico para poder ingresar.");
-        }
-        const token = await userCredential.user.getIdToken();
-        localStorage.setItem('authToken', token);
-        await redirectToPanel(token);
-    } catch (error) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage.textContent = 'Correo o contraseña incorrectos.';
-        } else {
-            errorMessage.textContent = error.message;
-        }
     }
-});
 
-// --- LÓGICA PARA MOSTRAR/OCULTAR CONTRASEÑA ---
-togglePassword.addEventListener('click', () => {
-    const isPassword = passwordInput.type === 'password';
-    passwordInput.type = isPassword ? 'text' : 'password';
-    togglePassword.textContent = isPassword ? 'visibility' : 'visibility_off';
-});
-
-// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE ---
-async function redirectToPanel(token) {
-    try {
-        const profileResponse = await fetch('/api/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
+    // Lógica para mostrar/ocultar la contraseña
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
         });
-        if (!profileResponse.ok) {
-            const profileError = await profileResponse.json();
-            throw new Error(profileError.message);
-        }
-        const profileData = await profileResponse.json();
-        if (profileData.role === 'admin') {
-            window.location.href = '/admin.html';
-        } else {
-            window.location.href = '/chat.html';
-        }
-    } catch (error) {
-        errorMessage.textContent = error.message || 'No se pudo verificar el perfil del usuario.';
     }
-}
+});

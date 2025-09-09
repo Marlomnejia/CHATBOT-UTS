@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db = require('../config/db');
-const { scrapeUtsMissionVision, scrapeAcademicCalendar, scrapeLatestNews } = require('../services/scraperService');
+const scraperService = require('../services/scraperService');
 const axios = require('axios');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -49,25 +49,25 @@ exports.askQuestion = async (req, res) => {
 
       if (isGradesQuestion) {
         try {
-            const token = req.headers.authorization;
-            const gradesResponse = await axios.get('http://localhost:3000/api/academic/grades', {
-                headers: { 'Authorization': token }
-            });
-            const grades = gradesResponse.data;
-            let gradesContext;
+          const token = req.headers.authorization;
+          const gradesResponse = await axios.get('http://localhost:3000/api/academic/grades', {
+            headers: { 'Authorization': token }
+          });
+          const grades = gradesResponse.data;
+          let gradesContext;
 
-            if (grades.length === 0) {
-                gradesContext = "El estudiante no tiene notas registradas para el semestre actual.";
-            } else {
-                gradesContext = "Aquí está tu rendimiento académico:\n" + grades.map(g => 
-                    `- Materia: ${g.materia}, Corte 1: ${g.corte1}, Corte 2: ${g.corte2}, Corte 3: ${g.corte3}, Definitiva: ${g.definitiva}`
-                ).join('\n');
-            }
-            const finalPrompt = `${basePrompt}\n\n--- Contexto de Notas del Estudiante ---\n${gradesContext}`;
-            return generateGeminiResponse(finalPrompt, question, userId, res);
+          if (grades.length === 0) {
+            gradesContext = "El estudiante no tiene notas registradas para el semestre actual.";
+          } else {
+            gradesContext = "Aquí está tu rendimiento académico:\n" + grades.map(g => 
+              `- Materia: ${g.materia}, Corte 1: ${g.corte1}, Corte 2: ${g.corte2}, Corte 3: ${g.corte3}, Definitiva: ${g.definitiva}`
+            ).join('\n');
+          }
+          const finalPrompt = `${basePrompt}\n\n--- Contexto de Notas del Estudiante ---\n${gradesContext}`;
+          return generateGeminiResponse(finalPrompt, question, userId, res);
         } catch (apiError) {
-            console.error("Error al llamar a la API de notas interna:", apiError.message);
-            return saveAndSendResponse("Tuve un problema al consultar tus notas en este momento. Por favor, inténtalo de nuevo más tarde.", question, userId, res);
+          console.error("Error al llamar a la API de notas interna:", apiError.message);
+          return saveAndSendResponse("Tuve un problema al consultar tus notas en este momento. Por favor, inténtalo de nuevo más tarde.", question, userId, res);
         }
       }
 
@@ -76,8 +76,7 @@ exports.askQuestion = async (req, res) => {
       let contextTitle = 'Contexto Externo';
 
       if (isNewsQuestion) {
-        cacheKey = 'latestNews';
-        contextTitle = 'Contexto de Últimas Noticias';
+        info = "Lo siento, la función de noticias no está disponible en este momento. Intenta de nuevo más tarde.";
       } else if (isMissionQuestion) {
         cacheKey = 'missionVision';
         contextTitle = 'Contexto Institucional';
@@ -91,9 +90,8 @@ exports.askQuestion = async (req, res) => {
         info = cache[cacheKey].data;
       } else if (cacheKey) {
         console.log(`🔄 Realizando scraping en tiempo real para: ${cacheKey}`);
-        if (isNewsQuestion) info = await scrapeLatestNews();
-        if (isMissionQuestion) info = await scrapeUtsMissionVision();
-        if (isCalendarQuestion) info = await scrapeAcademicCalendar();
+        if (isMissionQuestion) info = await scraperService.scrapeUtsMissionVision();
+        if (isCalendarQuestion) info = await scraperService.scrapeAcademicCalendar();
         if (info && !info.includes("Hubo un error")) {
           cache[cacheKey] = { data: info, timestamp: Date.now() };
         }

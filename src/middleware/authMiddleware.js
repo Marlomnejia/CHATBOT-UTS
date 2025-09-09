@@ -1,35 +1,38 @@
-const admin = require('../config/firebaseAdmin');
 const db = require('../config/db');
 
-// Middleware para proteger rutas, verificando el token de Firebase
-exports.firebaseAuthMiddleware = async (req, res, next) => {
-    const token = req.headers.authorization?.split('Bearer ')[1];
-    if (!token) {
-        return res.status(401).json({ message: 'No hay token, autorización denegada.' });
+// Middleware para verificar la autenticación
+exports.authMiddleware = async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    const userId = req.headers['x-user-id'];
+
+    if (!token || !userId) {
+        return res.status(401).json({ message: "No autorizado. Token o User ID faltante." });
     }
+
     try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        db.query('SELECT role FROM users WHERE id = ?', [decodedToken.uid], (error, results) => {
+        // En un sistema real, aquí decodificarías el token JWT y lo verificarías.
+        
+        const query = 'SELECT id, name, email, role FROM users WHERE id = ?';
+        db.query(query, [userId], (error, results) => {
             if (error || results.length === 0) {
-                return res.status(404).json({ message: "Usuario no encontrado en la base de datos." });
+                return res.status(401).json({ message: "Usuario no encontrado en la base de datos." });
             }
-            req.user = { 
-                id: decodedToken.uid, 
-                role: results[0].role 
-            };
+
+            req.user = results[0];
             next();
         });
     } catch (error) {
-        res.status(401).json({ message: 'Token no es válido.' });
+        console.error("Error al procesar el token:", error);
+        return res.status(401).json({ message: 'Token no válido.' });
     }
 };
 
 // Middleware para verificar si el usuario es un administrador
 exports.isAdmin = (req, res, next) => {
-  // Asume que firebaseAuthMiddleware ya se ejecutó
-  if (req.user && req.user.role === 'admin') {
-    next(); // El usuario es admin, continuar
-  } else {
-    res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
-  }
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
 };

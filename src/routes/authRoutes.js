@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { firebaseAuthMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 
-// Ruta para guardar el registro de un nuevo usuario en la BD (ahora protegida)
-router.post('/create-user-record', firebaseAuthMiddleware, authController.createUserRecord);
+// Ruta para el inicio de sesión
+router.post('/login', authController.login);
+// Ruta para el registro de usuarios
+router.post('/register', authController.register);
 
-// Ruta para manejar el inicio de sesión con Google
-router.post('/google-signin', firebaseAuthMiddleware, authController.googleSignIn);
+// Ruta para guardar el registro de un nuevo usuario en la base de datos
+router.post('/create-user-record', authMiddleware, authController.createUserRecord);
 
 // Ruta protegida para obtener los datos del usuario actual
-router.get('/me', firebaseAuthMiddleware, authController.getMe);
+router.get('/me', authMiddleware, authController.getMe);
 
 module.exports = router;
