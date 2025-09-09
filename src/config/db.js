@@ -5,7 +5,11 @@ const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME // <--- ¡AQUÍ ESTÁ EL CAMBIO!
+  database: process.env.DB_DATABASE, // ojo: usa el mismo nombre que tienes en .env
+  port: 4000, // TiDB suele usar 4000, revisa tu panel si es otro
+  ssl: {
+    rejectUnauthorized: true, // obliga a usar conexión segura
+  },
 });
 
 connection.connect(error => {

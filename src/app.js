@@ -14,7 +14,6 @@ const faqRoutes = require('./routes/faqRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
 const academicRoutes = require('./routes/academicRoutes');
 
-
 // Usar todas las rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/faqs', faqRoutes);
@@ -22,11 +21,11 @@ app.use('/api/chat', chatbotRoutes);
 app.use('/api/academic', academicRoutes);
 
 // --- NUEVA RUTA DE REDIRECCIÓN ---
-// Si un usuario visita la raíz del sitio, lo redirigimos al login.
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// 🚀 Escuchar en el puerto correcto (Render asigna uno dinámicamente)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
 });
