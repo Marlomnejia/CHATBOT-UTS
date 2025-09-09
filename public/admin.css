@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f7f9;
+    margin: 0;
+    color: #333;
+}
+
+.admin-container {
+    width: 95%;
+    max-width: 1400px;
+    margin: 30px auto;
+}
+
+.admin-header {
+    background: #00833d;
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px 12px 0 0;
+}
+.admin-header h2 { margin: 0; font-size: 1.5em; }
+#logout-btn { background: white; color: #00833d; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
+
+.admin-content {
+    padding: 30px;
+    background-color: #f4f7f9;
+    border-radius: 0 0 12px 12px;
+}
+
+/* --- DISEÑO DE GRID --- */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* Columna izquierda 1/3, derecha 2/3 */
+    gap: 30px;
+}
+
+.content-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+}
+.content-card h3 { margin-top: 0; font-size: 1.2em; color: #333; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+.content-card h3 .material-icons { color: #00833d; }
+
+/* --- FORMULARIO Y TABLA --- */
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
+input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1em; font-family: 'Roboto', sans-serif; transition: border-color 0.2s, box-shadow 0.2s; }
+input:focus, textarea:focus { border-color: #00833d; box-shadow: 0 0 0 2px rgba(0, 131, 61, 0.2); outline: none; }
+textarea { min-height: 120px; resize: vertical; }
+#create-faq-form button { padding: 12px 25px; background-color: #00833d; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+#create-faq-form button:hover { background-color: #006b32; }
+
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead { background-color: #f9fafb; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+th { font-weight: 500; color: #555; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; }
+td { color: #444; vertical-align: middle; font-size: 0.95em; }
+tbody tr:hover { background-color: #f9fafb; }
+.faq-answer { max-width: 450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.action-icons { display: flex; gap: 15px; }
+.action-icons .material-icons { cursor: pointer; transition: color 0.2s; }
+.action-icons .edit-icon:hover { color: #00833d; }
+.action-icons .delete-icon:hover { color: #d93025; }
+
+/* --- MODAL --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+.modal-overlay.visible { opacity: 1; visibility: visible; }
+.modal-content { background: white; padding: 0; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); transform: scale(0.95); transition: transform 0.3s ease; }
+.modal-overlay.visible .modal-content { transform: scale(1); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid #e0e0e0; }
+.modal-header h3 { margin: 0; font-size: 1.4em; border: none; padding: 0; }
+.close-modal { font-size: 2em; font-weight: bold; color: #aaa; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.close-modal:hover { color: #d93025; }
+#edit-faq-form { padding: 30px; }
+.modal-content .input-group { margin-bottom: 20px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; }
+.modal-actions button { font-size: 0.9em; font-weight: bold; padding: 10px 25px; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.2s; }
+.btn-primary { background-color: #00833d; color: white; }
+.btn-primary:hover { background-color: #006b32; }
+.btn-secondary { background-color: #e9ecef; color: #333; border: 1px solid #ddd; }
+.btn-secondary:hover { background-color: #ddd; }
+
+/* --- DISEÑO RESPONSIVE --- */
+@media (max-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr; /* Una sola columna en pantallas más pequeñas */
+    }
+}

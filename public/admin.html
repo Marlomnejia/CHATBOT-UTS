@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h2>Panel de Administrador</h2>
+            <button id="logout-btn">Cerrar Sesión</button>
+        </header>
+
+        <main class="admin-content">
+            <div class="content-grid">
+                <div class="grid-left">
+                    <div class="content-card">
+                        <details class="create-faq-accordion" open>
+                            <summary>
+                                <h3><span class="material-icons">add_circle</span> Crear Nueva FAQ</h3>
+                            </summary>
+                            <form id="create-faq-form">
+                                <div class="input-group">
+                                    <label for="question">Pregunta</label>
+                                    <input type="text" id="question" name="question" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="answer">Respuesta</label>
+                                    <textarea id="answer" name="answer" required></textarea>
+                                </div>
+                                <button type="submit">Guardar FAQ</button>
+                            </form>
+                        </details>
+                    </div>
+                </div>
+                <div class="grid-right">
+                    <div class="content-card">
+                        <h3><span class="material-icons">list_alt</span> Gestionar FAQs Existentes</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Pregunta</th>
+                                        <th>Respuesta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="faq-list">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar FAQ</h3>
+                <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="edit-faq-form">
+                <input type="hidden" id="edit-faq-id">
+                <div class="input-group">
+                    <label for="edit-question">Pregunta</label>
+                    <input type="text" id="edit-question" required>
+                </div>
+                <div class="input-group">
+                    <label for="edit-answer">Respuesta</label>
+                    <textarea id="edit-answer" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

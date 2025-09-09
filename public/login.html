@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Chatbot UTS</title>
+    <link rel="stylesheet" href="login.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            
+            <img src="images/logo-uts.png" alt="Logo de las Unidades Tecnológicas de Santander" class="login-logo">
+            
+            <h1>Chatbot UTS</h1>
+            <p class="slogan">¡Lo hacemos posible!</p>
+            
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="email">Correo Institucional</label>
+                    <input type="email" id="email" name="email" required placeholder="usuario@uts.edu.co">
+                </div>
+                <div class="input-group password-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required placeholder="********">
+                    <span class="toggle-password material-icons">visibility_off</span>
+                </div>
+                <button type="submit">Ingresar</button>
+            </form>
+
+            <div class="divider">o</div>
+
+            <p class="register-link">
+                ¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a>
+            </p>
+
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "TU_API_KEY", // Reemplaza con tus datos de Firebase
+        authDomain: "TU_AUTH_DOMAIN",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "TU_STORAGE_BUCKET",
+        messagingSenderId: "TU_MESSAGING_SENDER_ID",
+        appId: "TU_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    
+    <script src="login.js"></script>
+</body>
+</html>
