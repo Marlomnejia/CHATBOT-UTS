@@ -1,10 +1,11 @@
+// src/controllers/academicController.js
 const db = require('../config/db');
 
 /**
  * Obtiene las notas del estudiante autenticado y calcula la definitiva.
  */
 exports.getStudentGrades = (req, res) => {
-    const userId = req.user.id; // Obtenido del token gracias al middleware 'protect'
+    const userId = req.user.id; // ahora lo obtenemos del JWT
 
     const query = `
         SELECT 
@@ -22,13 +23,11 @@ exports.getStudentGrades = (req, res) => {
             console.error("Error en la consulta de notas:", error);
             return res.status(500).json({ message: 'Error al consultar las notas.' });
         }
-        
-        // Si no se encuentran notas, devolver un arreglo vacío
+
         if (results.length === 0) {
             return res.status(200).json([]);
         }
 
-        // Calcular la nota final para cada materia usando la ponderación 30-30-40
         const gradesWithFinal = results.map(grade => {
             const final = (grade.corte1 * 0.3) + (grade.corte2 * 0.3) + (grade.corte3 * 0.4);
             return {
@@ -36,7 +35,7 @@ exports.getStudentGrades = (req, res) => {
                 corte1: grade.corte1,
                 corte2: grade.corte2,
                 corte3: grade.corte3,
-                definitiva: parseFloat(final.toFixed(1)) // Redondear a un decimal
+                definitiva: parseFloat(final.toFixed(1))
             };
         });
 
