@@ -1,25 +1,27 @@
 const db = require('../config/db');
+const jwt = require('jsonwebtoken');
 
 // Middleware para verificar la autenticación
 exports.authMiddleware = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    const userId = req.headers['x-user-id'];
 
-    if (!token || !userId) {
-        return res.status(401).json({ message: "No autorizado. Token o User ID faltante." });
+    if (!token) {
+        return res.status(401).json({ message: "No autorizado. Token faltante." });
     }
 
     try {
-        // En un sistema real, aquí decodificarías el token JWT y lo verificarías.
-        
+        // Decodificar y verificar el JWT
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Buscar el usuario en la BD usando el id del token
         const query = 'SELECT id, name, email, role FROM users WHERE id = ?';
-        db.query(query, [userId], (error, results) => {
+        db.query(query, [decoded.id], (error, results) => {
             if (error || results.length === 0) {
                 return res.status(401).json({ message: "Usuario no encontrado en la base de datos." });
             }
 
-            req.user = results[0];
+            req.user = results[0]; // Guardamos usuario en req.user
             next();
         });
     } catch (error) {
@@ -28,7 +30,7 @@ exports.authMiddleware = async (req, res, next) => {
     }
 };
 
-// Middleware para verificar si el usuario es un administrador
+// Middleware para verificar si el usuario es administrador
 exports.isAdmin = (req, res, next) => {
     if (req.user && req.user.role === 'admin') {
         next();
