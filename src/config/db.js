@@ -8,7 +8,7 @@ const connection = mysql.createConnection({
   database: process.env.DB_DATABASE, // ojo: usa el mismo nombre que tienes en .env
   port: 4000, // TiDB suele usar 4000, revisa tu panel si es otro
   ssl: {
-    rejectUnauthorized: true, // obliga a usar conexión segura
+    rejectUnauthorized: false, // obliga a usar conexión segura
   },
 });
 

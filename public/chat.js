@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // 0. Definir la URL base según si es local o producción
+    const API_BASE = window.location.hostname === 'localhost'
+        ? 'http://localhost:10000'
+        : 'https://chatbot-uts-nw8x.onrender.com';
+
     // 1. Obtener el token de autenticación y el userId del almacenamiento local
     const authToken = localStorage.getItem('authToken');
     const userId = localStorage.getItem('userId');
@@ -11,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Verificar el token y obtener los datos del usuario
     try {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -34,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const welcomeMessage = document.getElementById('welcome-message');
 
         welcomeMessage.textContent = `¡Hola, ${user.name}! Bienvenido al asistente académico.`;
-        await loadChatHistory(authToken, userId);
+        await loadChatHistory(API_BASE, authToken, userId);
 
         // --- MANEJO DE LA SALIDA DE SESIÓN ---
         logoutBtn.addEventListener('click', () => {
@@ -50,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!question) return;
             userInput.value = '';
             document.querySelector('.suggestion-container')?.remove();
-            handleUserQuestion(question);
+            handleUserQuestion(API_BASE, question);
         });
 
     } catch (error) {
@@ -62,9 +67,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-async function loadChatHistory(token, userId) {
+async function loadChatHistory(API_BASE, token, userId) {
     const chatBox = document.getElementById('chat-box');
-    const response = await fetch('/api/chat/history', {
+    const response = await fetch(`${API_BASE}/api/chat/history`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'X-User-Id': userId
@@ -76,7 +81,7 @@ async function loadChatHistory(token, userId) {
     if (history.length > 0) {
         history.forEach(msg => addMessage(msg.message, msg.sender));
     } else {
-        displaySuggestedQuestions();
+        displaySuggestedQuestions(API_BASE);
     }
 }
 
@@ -96,7 +101,7 @@ function addMessage(content, sender, id) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function displaySuggestedQuestions() {
+function displaySuggestedQuestions(API_BASE) {
     const chatBox = document.getElementById('chat-box');
     const suggestions = ['¿Cuáles son las últimas noticias?', 'Ver calendario académico', '¿Cuáles son las carreras?'];
     const container = document.createElement('div');
@@ -106,7 +111,7 @@ function displaySuggestedQuestions() {
         btn.className = 'suggestion-btn';
         btn.textContent = text;
         btn.onclick = () => {
-            handleUserQuestion(text);
+            handleUserQuestion(API_BASE, text);
             container.remove();
         };
         container.appendChild(btn);
@@ -114,7 +119,7 @@ function displaySuggestedQuestions() {
     chatBox.appendChild(container);
 }
 
-async function handleUserQuestion(question) {
+async function handleUserQuestion(API_BASE, question) {
     const userInput = document.getElementById('user-input');
     const authToken = localStorage.getItem('authToken');
     const userId = localStorage.getItem('userId');
@@ -122,7 +127,7 @@ async function handleUserQuestion(question) {
     const indicatorHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
     addMessage(indicatorHTML, 'indicator', 'typing-indicator');
     try {
-        const response = await fetch('/api/chat/ask', {
+        const response = await fetch(`${API_BASE}/api/chat/ask`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
