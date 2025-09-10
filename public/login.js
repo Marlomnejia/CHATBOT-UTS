@@ -34,10 +34,17 @@ googleSignInBtn.addEventListener('click', () => {
         })
         .catch((error) => {
             if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage.textContent = 'El inicio de sesión fue cancelado.';
+                errorMessage.textContent = 'El inicio de sesión fue cancelado (popup cerrado).';
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                errorMessage.textContent = 'Ya hay una ventana de autenticación abierta. Por favor, ciérrala e intenta de nuevo.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage.textContent = 'El navegador bloqueó la ventana de Google. Permite popups para este sitio.';
+            } else if (error.code === 'auth/operation-not-allowed') {
+                errorMessage.textContent = 'El proveedor de Google no está habilitado en Firebase.';
             } else {
                 errorMessage.textContent = error.message || 'Error al iniciar sesión con Google.';
             }
+            console.error('Google Sign-In error:', error);
         });
 });
 
