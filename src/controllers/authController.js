@@ -18,14 +18,25 @@ exports.createUserRecord = (req, res) => {
 // Llamado por el frontend DESPUÉS de un login con Google
 exports.googleSignIn = (req, res) => {
     const { uid, name, email } = req.user;
+    console.log('googleSignIn: uid:', uid, 'name:', name, 'email:', email);
     db.query('SELECT * FROM users WHERE id = ?', [uid], (error, results) => {
-        if (error) return res.status(500).json({ message: "Error en la base de datos." });
+        console.log('Resultado de SELECT en googleSignIn:', results, 'Error:', error);
+        if (error) {
+            console.error('Error en la consulta SELECT:', error);
+            return res.status(500).json({ message: "Error en la base de datos.", error });
+        }
         if (results.length > 0) {
+            console.log('Usuario ya existe en la BD.');
             return res.status(200).json({ message: "Inicio de sesión con Google exitoso." });
         } else {
             const newUser = { id: uid, name, email, role: 'student' };
-            db.query('INSERT INTO users SET ?', newUser, (err) => {
-                if (err) return res.status(500).json({ message: "Error al registrar al usuario de Google." });
+            console.log('Intentando insertar nuevo usuario:', newUser);
+            db.query('INSERT INTO users SET ?', newUser, (err, insertResult) => {
+                if (err) {
+                    console.error('Error al registrar al usuario de Google:', err);
+                    return res.status(500).json({ message: "Error al registrar al usuario de Google.", error: err });
+                }
+                console.log('Usuario de Google registrado exitosamente:', insertResult);
                 return res.status(201).json({ message: "Usuario de Google registrado exitosamente." });
             });
         }
