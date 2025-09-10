@@ -10,12 +10,9 @@
 <body>
     <div class="login-container">
         <div class="login-card">
-            
-            <img src="images/logo-uts.png" alt="Logo de las Unidades Tecnológicas de Santander" class="login-logo">
-            
+            <img src="images/logo-uts.png" alt="Logo UTS" class="login-logo">
             <h1>Chatbot UTS</h1>
             <p class="slogan">¡Lo hacemos posible!</p>
-            
             <form id="login-form">
                 <div class="input-group">
                     <label for="email">Correo Institucional</label>
@@ -28,18 +25,14 @@
                 </div>
                 <button type="submit">Ingresar</button>
             </form>
-
             <div class="divider">o</div>
-
             <button id="google-signin-btn" class="google-btn">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
                 <span>Iniciar sesión con Google</span>
             </button>
-            
             <p class="register-link">
                 ¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a>
             </p>
-
             <p id="error-message"></p>
         </div>
     </div>
@@ -47,14 +40,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script>
+      // Tu configuración de Firebase
       const firebaseConfig = {
-        apiKey: "TU_API_KEY", // Reemplaza con tus datos de Firebase
-        authDomain: "TU_AUTH_DOMAIN",
-        projectId: "TU_PROJECT_ID",
-        storageBucket: "TU_STORAGE_BUCKET",
-        messagingSenderId: "TU_MESSAGING_SENDER_ID",
-        appId: "TU_APP_ID"
+        apiKey: "AIzaSyCLGjA_9emkZFz9OiyveGyg4M_5uIK5ohM",
+        authDomain: "chat-b-9dccc.firebaseapp.com",
+        projectId: "chat-b-9dccc",
+        storageBucket: "chat-b-9dccc.appspot.com",
+        messagingSenderId: "546850192040",
+        appId: "1:546850192040:web:f9c8ad7cd86247992fa09d"
       };
+      // Inicializar Firebase
       firebase.initializeApp(firebaseConfig);
     </script>
     

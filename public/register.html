@@ -9,12 +9,9 @@
 <body>
     <div class="login-container">
         <div class="login-card">
-            
-            <img src="images/logo-uts.png" alt="Logo de las Unidades Tecnológicas de Santander" class="login-logo">
-            
+            <img src="images/logo-uts.png" alt="Logo UTS" class="login-logo">
             <h1>Crear Cuenta</h1>
             <p class="slogan">Únete al asistente académico</p>
-            
             <form id="register-form">
                 <div class="input-group">
                     <label for="name">Nombre Completo</label>
@@ -30,13 +27,29 @@
                 </div>
                 <button type="submit">Registrarse</button>
             </form>
-            
-            <p class="login-link"> ¿Ya tienes una cuenta? <a href="login.html">Inicia sesión aquí</a>
+            <p class="login-link">
+                ¿Ya tienes una cuenta? <a href="login.html">Inicia sesión aquí</a>
             </p>
-
             <p id="message"></p>
         </div>
     </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script>
+      // Tu configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyCLGjA_9emkZFz9OiyveGyg4M_5uIK5ohM",
+        authDomain: "chat-b-9dccc.firebaseapp.com",
+        projectId: "chat-b-9dccc",
+        storageBucket: "chat-b-9dccc.appspot.com",
+        messagingSenderId: "546850192040",
+        appId: "1:546850192040:web:f9c8ad7cd86247992fa09d"
+      };
+      // Inicializar Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
     <script src="register.js"></script>
 </body>
 </html>
