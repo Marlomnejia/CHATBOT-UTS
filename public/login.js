@@ -9,30 +9,34 @@ const auth = firebase.auth();
 googleSignInBtn.addEventListener('click', () => {
     errorMessage.textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
-    // 1. Redirige a la página de Google para iniciar sesión
+    // 1. Redirige al usuario a la página de Google para iniciar sesión
     auth.signInWithRedirect(provider);
 });
 
 // --- MANEJO DEL RESULTADO DE LA REDIRECCIÓN ---
-// Esta función se ejecuta automáticamente cuando la página de login carga
+// Esta función se ejecuta automáticamente CADA VEZ que la página de login carga
 (async function handleRedirectResult() {
     try {
+        // 2. Intenta obtener el resultado de la redirección
         const result = await auth.getRedirectResult();
-        // Si 'result.user' existe, significa que el usuario acaba de volver de Google
+        
+        // 3. Si 'result.user' existe, significa que el usuario acaba de volver de Google
         if (result.user) {
+            errorMessage.textContent = 'Iniciando sesión...'; // Mensaje de carga
             const token = await result.user.getIdToken();
             localStorage.setItem('authToken', token);
 
-            // Informar a nuestro backend sobre el inicio de sesión
+            // 4. Informar a nuestro backend sobre el inicio de sesión para que lo guarde en la BD si es nuevo
             await fetch('/api/auth/google-signin', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // Redirigir al panel correspondiente
+            // 5. Redirigir al panel correspondiente
             await redirectToPanel(token);
         }
     } catch (error) {
+        // Si hay un error, lo mostramos (ej. la cuenta de Google fue deshabilitada)
         errorMessage.textContent = 'Error al procesar el inicio de sesión con Google.';
     }
 })();
