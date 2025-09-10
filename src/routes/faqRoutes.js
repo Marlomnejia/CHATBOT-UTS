@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const faqController = require('../controllers/faqController');
-const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
+const { firebaseAuthMiddleware, isAdmin } = require('../middleware/authMiddleware');
 
-router.get('/', authMiddleware, faqController.getAllFaqs);
-router.post('/', authMiddleware, isAdmin, faqController.createFaq);
-router.put('/:id', authMiddleware, isAdmin, faqController.updateFaq);
-router.delete('/:id', authMiddleware, isAdmin, faqController.deleteFaq);
+// Esta es la línea 6, que probablemente causa el error.
+// Asegúrate de que faqController.getAllFaqs sea una función válida.
+router.get('/', firebaseAuthMiddleware, faqController.getAllFaqs);
+router.post('/', firebaseAuthMiddleware, isAdmin, faqController.createFaq);
+router.put('/:id', firebaseAuthMiddleware, isAdmin, faqController.updateFaq);
+router.delete('/:id', firebaseAuthMiddleware, isAdmin, faqController.deleteFaq);
 
 module.exports = router;

@@ -3,12 +3,10 @@ const db = require('../config/db');
 // Crear una nueva FAQ (Solo Admin)
 exports.createFaq = (req, res) => {
   const { question, answer } = req.body;
-  const created_by = req.user.id; // Obtenemos el ID del admin desde el token
-
+  const created_by = req.user.id;
   if (!question || !answer) {
     return res.status(400).json({ message: 'La pregunta y la respuesta son obligatorias.' });
   }
-
   const newFaq = { question, answer, created_by };
   db.query('INSERT INTO faqs SET ?', newFaq, (error, results) => {
     if (error) {
@@ -32,11 +30,9 @@ exports.getAllFaqs = (req, res) => {
 exports.updateFaq = (req, res) => {
   const faqId = req.params.id;
   const { question, answer } = req.body;
-
   if (!question || !answer) {
     return res.status(400).json({ message: 'La pregunta y la respuesta son obligatorias.' });
   }
-
   db.query('UPDATE faqs SET question = ?, answer = ? WHERE id = ?', [question, answer, faqId], (error, results) => {
     if (error) {
       return res.status(500).json({ message: 'Error al actualizar la FAQ.' });
@@ -51,7 +47,6 @@ exports.updateFaq = (req, res) => {
 // Borrar una FAQ (Solo Admin)
 exports.deleteFaq = (req, res) => {
   const faqId = req.params.id;
-
   db.query('DELETE FROM faqs WHERE id = ?', [faqId], (error, results) => {
     if (error) {
       return res.status(500).json({ message: 'Error al borrar la FAQ.' });
