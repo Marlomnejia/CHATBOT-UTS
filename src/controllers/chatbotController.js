@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db = require('../config/db');
-const scraperService = require('../services/scraperService');
+const { scrapeUtsMissionVision, scrapeAcademicCalendar, scrapeLatestNews } = require('../services/scraperService');
 const axios = require('axios');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -50,7 +50,9 @@ exports.askQuestion = async (req, res) => {
       if (isGradesQuestion) {
         try {
           const token = req.headers.authorization;
-          const gradesResponse = await axios.get('http://localhost:3000/api/academic/grades', {
+          // Usa la variable de entorno para la URL. Si no existe, usa localhost.
+          const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+          const gradesResponse = await axios.get(`${baseURL}/api/academic/grades`, {
             headers: { 'Authorization': token }
           });
           const grades = gradesResponse.data;
@@ -76,7 +78,8 @@ exports.askQuestion = async (req, res) => {
       let contextTitle = 'Contexto Externo';
 
       if (isNewsQuestion) {
-        info = "Lo siento, la función de noticias no está disponible en este momento. Intenta de nuevo más tarde.";
+        cacheKey = 'latestNews';
+        contextTitle = 'Contexto de Últimas Noticias';
       } else if (isMissionQuestion) {
         cacheKey = 'missionVision';
         contextTitle = 'Contexto Institucional';
@@ -90,8 +93,9 @@ exports.askQuestion = async (req, res) => {
         info = cache[cacheKey].data;
       } else if (cacheKey) {
         console.log(`🔄 Realizando scraping en tiempo real para: ${cacheKey}`);
-        if (isMissionQuestion) info = await scraperService.scrapeUtsMissionVision();
-        if (isCalendarQuestion) info = await scraperService.scrapeAcademicCalendar();
+        if (isNewsQuestion) info = await scrapeLatestNews();
+        if (isMissionQuestion) info = await scrapeUtsMissionVision();
+        if (isCalendarQuestion) info = await scrapeAcademicCalendar();
         if (info && !info.includes("Hubo un error")) {
           cache[cacheKey] = { data: info, timestamp: Date.now() };
         }
