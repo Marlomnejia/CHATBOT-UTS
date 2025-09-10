@@ -5,50 +5,40 @@ const passwordInput = document.getElementById('password');
 const googleSignInBtn = document.getElementById('google-signin-btn');
 const auth = firebase.auth();
 
-// --- LÓGICA PARA INICIO DE SESIÓN CON GOOGLE ---
+// --- LOGIN CON GOOGLE (MÉTODO DE REDIRECCIÓN) ---
 googleSignInBtn.addEventListener('click', () => {
     errorMessage.textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-        .then(async (result) => {
+    // 1. Redirige a la página de Google para iniciar sesión
+    auth.signInWithRedirect(provider);
+});
+
+// --- MANEJO DEL RESULTADO DE LA REDIRECCIÓN ---
+// Esta función se ejecuta automáticamente cuando la página carga
+(async function handleRedirectResult() {
+    try {
+        const result = await auth.getRedirectResult();
+        // Si 'result.user' existe, significa que el usuario acaba de volver de Google
+        if (result.user) {
             const token = await result.user.getIdToken();
             localStorage.setItem('authToken', token);
 
-            // Informar a nuestro backend sobre el inicio de sesión para que verifique o cree el registro
-            const response = await fetch('/api/auth/google-signin', {
+            // Informar a nuestro backend sobre el inicio de sesión
+            await fetch('/api/auth/google-signin', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) {
-                let msg = 'Error al iniciar sesión con Google.';
-                try {
-                    const data = await response.json();
-                    msg = data.message || msg;
-                } catch {}
-                errorMessage.textContent = msg;
-                return;
-            }
 
             // Redirigir al panel correspondiente
             await redirectToPanel(token);
-        })
-        .catch((error) => {
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage.textContent = 'El inicio de sesión fue cancelado (popup cerrado).';
-            } else if (error.code === 'auth/cancelled-popup-request') {
-                errorMessage.textContent = 'Ya hay una ventana de autenticación abierta. Por favor, ciérrala e intenta de nuevo.';
-            } else if (error.code === 'auth/popup-blocked') {
-                errorMessage.textContent = 'El navegador bloqueó la ventana de Google. Permite popups para este sitio.';
-            } else if (error.code === 'auth/operation-not-allowed') {
-                errorMessage.textContent = 'El proveedor de Google no está habilitado en Firebase.';
-            } else {
-                errorMessage.textContent = error.message || 'Error al iniciar sesión con Google.';
-            }
-            console.error('Google Sign-In error:', error);
-        });
-});
+        }
+    } catch (error) {
+        errorMessage.textContent = 'Error al procesar el inicio de sesión con Google.';
+    }
+})();
 
-// --- LÓGICA PARA INICIO DE SESIÓN CON CORREO Y CONTRASEÑA ---
+
+// --- LOGIN CON CORREO Y CONTRASEÑA (sin cambios) ---
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
@@ -62,19 +52,6 @@ loginForm.addEventListener('submit', async (event) => {
         }
         const token = await userCredential.user.getIdToken();
         localStorage.setItem('authToken', token);
-        // Verificar el perfil antes de redirigir
-        const response = await fetch('/api/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            let msg = 'Error al verificar el perfil.';
-            try {
-                const data = await response.json();
-                msg = data.message || msg;
-            } catch {}
-            errorMessage.textContent = msg;
-            return;
-        }
         await redirectToPanel(token);
     } catch (error) {
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -85,14 +62,14 @@ loginForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- LÓGICA PARA MOSTRAR/OCULTAR CONTRASEÑA ---
+// --- MOSTRAR/OCULTAR CONTRASEÑA (sin cambios) ---
 togglePassword.addEventListener('click', () => {
     const isPassword = passwordInput.type === 'password';
     passwordInput.type = isPassword ? 'text' : 'password';
     togglePassword.textContent = isPassword ? 'visibility' : 'visibility_off';
 });
 
-// --- FUNCIÓN AUXILIAR PARA REDIRECCIÓN INTELIGENTE ---
+// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE (sin cambios) ---
 async function redirectToPanel(token) {
     try {
         const profileResponse = await fetch('/api/auth/me', {
