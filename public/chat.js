@@ -1,19 +1,25 @@
-// src/public/js/chat.js
 document.addEventListener('DOMContentLoaded', async () => {
     const authToken = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
 
-    if (!authToken) {
+    if (!authToken || !userId) {
         window.location.href = '/login.html';
         return;
     }
 
     try {
+        // Verificar token
         const response = await fetch('/api/auth/me', {
             method: 'GET',
-            headers: { 'Authorization': `Bearer ${authToken}` }
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'X-User-Id': userId
+            }
         });
 
-        if (!response.ok) throw new Error('Sesión inválida.');
+        if (!response.ok) {
+            throw new Error('Sesión inválida.');
+        }
 
         const user = await response.json();
         console.log("Usuario autenticado:", user);
@@ -25,10 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const welcomeMessage = document.getElementById('welcome-message');
 
         welcomeMessage.textContent = `¡Hola, ${user.name}! Bienvenido al asistente académico.`;
-        await loadChatHistory(authToken);
+        await loadChatHistory(authToken, userId);
 
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('authToken');
+            localStorage.removeItem('userId');
             window.location.href = '/login.html';
         });
 
@@ -38,25 +45,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!question) return;
             userInput.value = '';
             document.querySelector('.suggestion-container')?.remove();
-            handleUserQuestion(question, authToken);
+            handleUserQuestion(question, authToken, userId);
         });
 
     } catch (error) {
         console.error("Error al verificar la sesión:", error);
         alert("Sesión inválida. Por favor, inicia sesión de nuevo.");
         localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
         window.location.href = '/login.html';
     }
 });
 
-async function loadChatHistory(token) {
+async function loadChatHistory(token, userId) {
     const chatBox = document.getElementById('chat-box');
     const response = await fetch('/api/chat/history', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-User-Id': userId
+        }
     });
+
     const history = await response.json();
     chatBox.innerHTML = '';
     addMessage('¡Hola! Soy el asistente académico de la UTS. ¿En qué puedo ayudarte hoy?', 'bot');
+
     if (history.length > 0) {
         history.forEach(msg => addMessage(msg.message, msg.sender));
     } else {
@@ -85,36 +98,47 @@ function displaySuggestedQuestions() {
     const suggestions = ['¿Cuáles son las últimas noticias?', 'Ver calendario académico', '¿Cuáles son las carreras?'];
     const container = document.createElement('div');
     container.className = 'suggestion-container';
+
     suggestions.forEach(text => {
         const btn = document.createElement('button');
         btn.className = 'suggestion-btn';
         btn.textContent = text;
         btn.onclick = () => {
-            handleUserQuestion(text, localStorage.getItem('authToken'));
+            handleUserQuestion(text, localStorage.getItem('authToken'), localStorage.getItem('userId'));
             container.remove();
         };
         container.appendChild(btn);
     });
+
     chatBox.appendChild(container);
 }
 
-async function handleUserQuestion(question, token) {
+async function handleUserQuestion(question, token, userId) {
+    const userInput = document.getElementById('user-input');
     addMessage(question, 'user');
-    addMessage(`<div class="typing-indicator"><span></span><span></span><span></span></div>`, 'indicator', 'typing-indicator');
+
+    const indicatorHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+    addMessage(indicatorHTML, 'indicator', 'typing-indicator');
 
     try {
         const response = await fetch('/api/chat/ask', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'X-User-Id': userId
             },
             body: JSON.stringify({ question })
         });
 
-        if (!response.ok) throw new Error((await response.json()).message);
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || 'Error al consultar la API.');
+        }
+
         const data = await response.json();
         addMessage(data.answer, 'bot');
+
     } catch (error) {
         addMessage(`Error: ${error.message}`, 'bot');
     } finally {
