@@ -3,20 +3,12 @@ const db = require('../config/db');
 
 // Llamado por el frontend DESPUÉS de un registro exitoso en Firebase
 exports.createUserRecord = (req, res) => {
-    // La información del usuario viene del token verificado por el middleware
-    const { uid, name, email } = req.user;
-
-    const newUser = {
-        id: uid, // Usamos el UID de Firebase
-        name: name,
-        email: email,
-        role: 'student'
-    };
-
+    const { uid, name, email } = req.user; // La info viene del token verificado
+    const newUser = { id: uid, name, email, role: 'student' };
     db.query('INSERT INTO users SET ?', newUser, (error) => {
         if (error) {
             console.error("Error guardando usuario en MySQL:", error);
-            admin.auth().deleteUser(uid); // Si falla la BD, borra el usuario de Firebase
+            admin.auth().deleteUser(uid);
             return res.status(500).json({ message: 'Error al guardar el registro del usuario.' });
         }
         res.status(201).json({ message: 'Registro de usuario completado.' });

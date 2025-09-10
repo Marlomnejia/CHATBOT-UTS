@@ -3,13 +3,12 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { firebaseAuthMiddleware } = require('../middleware/authMiddleware');
 
-// Ruta para guardar el registro de un nuevo usuario en la BD (ahora protegida)
+// Esta es la línea 7 que probablemente causa el error.
+// Asegúrate de que authController.createUserRecord sea una función válida.
 router.post('/create-user-record', firebaseAuthMiddleware, authController.createUserRecord);
 
-// Ruta para manejar el inicio de sesión con Google
 router.post('/google-signin', firebaseAuthMiddleware, authController.googleSignIn);
 
-// Ruta protegida para obtener los datos del usuario actual
 router.get('/me', firebaseAuthMiddleware, authController.getMe);
 
 module.exports = router;
