@@ -94,6 +94,7 @@ async function redirectToPanel(token) {
                 throw new Error(profileError.message);
             }
             const profileData = await profileResponse.json();
+            console.log('Respuesta de /api/auth/me:', profileData);
             if (profileData.role === 'admin') {
                 window.location.href = '/admin.html';
             } else {
