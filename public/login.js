@@ -17,26 +17,32 @@ googleSignInBtn.addEventListener('click', () => {
 // Esta función se ejecuta automáticamente CADA VEZ que la página de login carga
 (async function handleRedirectResult() {
     try {
+        console.log('handleRedirectResult: Iniciando...');
         // 2. Intenta obtener el resultado de la redirección
         const result = await auth.getRedirectResult();
-        
+        console.log('Resultado de getRedirectResult:', result);
         // 3. Si 'result.user' existe, significa que el usuario acaba de volver de Google
         if (result.user) {
+            console.log('Usuario detectado tras redirección:', result.user);
             errorMessage.textContent = 'Iniciando sesión...'; // Mensaje de carga
             const token = await result.user.getIdToken();
+            console.log('Token obtenido:', token);
             localStorage.setItem('authToken', token);
 
             // 4. Informar a nuestro backend sobre el inicio de sesión para que lo guarde en la BD si es nuevo
-            await fetch('/api/auth/google-signin', {
+            const googleSignInResponse = await fetch('/api/auth/google-signin', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            console.log('Respuesta de /api/auth/google-signin:', googleSignInResponse);
 
             // 5. Redirigir al panel correspondiente
             await redirectToPanel(token);
+        } else {
+            console.log('No se detectó usuario tras redirección.');
         }
     } catch (error) {
-        // Si hay un error, lo mostramos (ej. la cuenta de Google fue deshabilitada)
+        console.error('Error en handleRedirectResult:', error);
         errorMessage.textContent = 'Error al procesar el inicio de sesión con Google.';
     }
 })();
