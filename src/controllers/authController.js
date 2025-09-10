@@ -1,8 +1,8 @@
 const admin = require('../config/firebaseAdmin');
 const db = require('../config/db');
 
-// Llamado por el frontend DESPUÉS de un registro exitoso en Firebase
-exports.createUserRecord = (req, res) => {
+// Definimos las funciones de forma local
+const createUserRecord = (req, res) => {
     const { uid, name, email } = req.user;
     const newUser = { id: uid, name, email, role: 'student' };
     db.query('INSERT INTO users SET ?', newUser, (error) => {
@@ -15,8 +15,7 @@ exports.createUserRecord = (req, res) => {
     });
 };
 
-// Llamado por el frontend DESPUÉS de un login con Google
-exports.googleSignIn = (req, res) => {
+const googleSignIn = (req, res) => {
     const { uid, name, email } = req.user;
     db.query('SELECT * FROM users WHERE id = ?', [uid], (error, results) => {
         if (error) return res.status(500).json({ message: "Error en la base de datos." });
@@ -32,8 +31,7 @@ exports.googleSignIn = (req, res) => {
     });
 };
 
-// Obtiene los datos del usuario logueado
-exports.getMe = (req, res) => {
+const getMe = (req, res) => {
   const userId = req.user.id;
   db.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId], (error, results) => {
     if (error || results.length === 0) {
@@ -41,4 +39,11 @@ exports.getMe = (req, res) => {
     }
     res.status(200).json(results[0]);
   });
+};
+
+// Exportamos todas las funciones juntas al final
+module.exports = {
+    createUserRecord,
+    googleSignIn,
+    getMe
 };
