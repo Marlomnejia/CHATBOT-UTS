@@ -1,42 +1,50 @@
+const admin = require('../config/firebaseAdmin');
 const db = require('../config/db');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'un_secreto_muy_dificil_de_adivinar_12345';
 
-const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    const userId = req.headers['x-user-id'];
-
-    if (!token || !userId) {
-        return res.status(401).json({ message: "No autorizado. Token o User ID faltante." });
+// Middleware para proteger rutas, verificando el token de Firebase
+exports.firebaseAuthMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'No hay token o tiene un formato incorrecto, autorización denegada.' });
     }
 
+    const token = authHeader.split('Bearer ')[1];
+    
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.id != userId) {
-            return res.status(401).json({ message: "Token inválido para este usuario." });
-        }
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        
+        // Adjuntamos la información básica del token a la petición
+        // La info completa (nombre, rol) la buscaremos en la BD si es necesario
+        req.user = { 
+            uid: decodedToken.uid,
+            name: decodedToken.name,
+            email: decodedToken.email
+        };
 
-        db.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId], (error, results) => {
+        db.query('SELECT role FROM users WHERE id = ?', [decodedToken.uid], (error, results) => {
             if (error || results.length === 0) {
-                return res.status(401).json({ message: "Usuario no encontrado en la base de datos." });
+                // Si no está en nuestra BD, aún podemos dejarlo pasar, pero sin rol.
+                // O podemos negarlo. Por ahora, lo dejamos pasar sin rol.
+                // Para la función 'getMe' y otras, es crucial que el usuario exista en la BD.
+                req.user.role = results.length > 0 ? results[0].role : 'student';
+                return next();
             }
-
-            req.user = results[0];
+            // Si lo encontramos, añadimos el rol de nuestra BD
+            req.user.role = results[0].role;
             next();
         });
-
     } catch (error) {
-        console.error("Error al procesar el token:", error);
-        return res.status(401).json({ message: "Token no válido." });
+        console.error("Error verificando el token:", error);
+        res.status(403).json({ message: 'Token no es válido.' });
     }
 };
 
-const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        return next();
-    }
-    res.status(403).json({ message: "Acceso denegado. Se requiere rol de administrador." });
+// Middleware para verificar si el usuario es un administrador
+exports.isAdmin = (req, res, next) => {
+  // Asume que firebaseAuthMiddleware ya se ejecutó
+  if (req.user && req.user.role === 'admin') {
+    next(); // El usuario es admin, continuar
+  } else {
+    res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
+  }
 };
-
-module.exports = { authMiddleware, isAdmin };
