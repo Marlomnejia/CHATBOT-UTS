@@ -5,29 +5,40 @@ const passwordInput = document.getElementById('password');
 const googleSignInBtn = document.getElementById('google-signin-btn');
 const auth = firebase.auth();
 
-// --- LOGIN CON GOOGLE ---
+// --- LOGIN CON GOOGLE (MÉTODO DE REDIRECCIÓN) ---
 googleSignInBtn.addEventListener('click', () => {
     errorMessage.textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-        .then(async (result) => {
+    // 1. Redirige a la página de Google para iniciar sesión
+    auth.signInWithRedirect(provider);
+});
+
+// --- MANEJO DEL RESULTADO DE LA REDIRECCIÓN ---
+// Esta función se ejecuta automáticamente cuando la página de login carga
+(async function handleRedirectResult() {
+    try {
+        const result = await auth.getRedirectResult();
+        // Si 'result.user' existe, significa que el usuario acaba de volver de Google
+        if (result.user) {
             const token = await result.user.getIdToken();
             localStorage.setItem('authToken', token);
 
+            // Informar a nuestro backend sobre el inicio de sesión
             await fetch('/api/auth/google-signin', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // Llamamos a la función de redirección
+            // Redirigir al panel correspondiente
             await redirectToPanel(token);
-        })
-        .catch((error) => {
-            errorMessage.textContent = 'Error al iniciar sesión con Google.';
-        });
-});
+        }
+    } catch (error) {
+        errorMessage.textContent = 'Error al procesar el inicio de sesión con Google.';
+    }
+})();
 
-// --- LOGIN CON CORREO Y CONTRASEÑA ---
+
+// --- LOGIN CON CORREO Y CONTRASEÑA (sin cambios) ---
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
@@ -43,7 +54,7 @@ loginForm.addEventListener('submit', async (event) => {
         localStorage.setItem('authToken', token);
         await redirectToPanel(token);
     } catch (error) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             errorMessage.textContent = 'Correo o contraseña incorrectos.';
         } else {
             errorMessage.textContent = error.message;
@@ -51,14 +62,14 @@ loginForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- MOSTRAR/OCULTAR CONTRASEÑA ---
+// --- MOSTRAR/OCULTAR CONTRASEÑA (sin cambios) ---
 togglePassword.addEventListener('click', () => {
     const isPassword = passwordInput.type === 'password';
     passwordInput.type = isPassword ? 'text' : 'password';
     togglePassword.textContent = isPassword ? 'visibility' : 'visibility_off';
 });
 
-// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE ---
+// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE (sin cambios) ---
 async function redirectToPanel(token) {
     try {
         const profileResponse = await fetch('/api/auth/me', {
