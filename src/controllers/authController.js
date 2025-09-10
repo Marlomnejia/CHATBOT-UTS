@@ -3,7 +3,7 @@ const db = require('../config/db');
 
 // Llamado por el frontend DESPUÉS de un registro exitoso en Firebase
 exports.createUserRecord = (req, res) => {
-    const { uid, name, email } = req.user; // La info viene del token verificado
+    const { uid, name, email } = req.user;
     const newUser = { id: uid, name, email, role: 'student' };
     db.query('INSERT INTO users SET ?', newUser, (error) => {
         if (error) {
