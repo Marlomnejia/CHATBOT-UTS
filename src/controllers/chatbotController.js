@@ -1,11 +1,12 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const db = require('../config/db');
 const { scrapeUtsMissionVision, scrapeAcademicCalendar, scrapeLatestNews } = require('../services/scraperService');
+const axios = require('axios');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const cache = {};
-const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hora
+const CACHE_DURATION_MS = 60 * 60 * 1000;
 
 const smallTalk = {
   'hola': '¡Hola! ¿En qué puedo ayudarte hoy?',
@@ -47,69 +48,65 @@ exports.askQuestion = async (req, res) => {
       const isGradesQuestion = gradesKeywords.some(k => lowerCaseQuestion.includes(k));
 
       if (isGradesQuestion) {
-        const query = `
-            SELECT c.name AS course_name, g.corte1, g.corte2, g.corte3
-            FROM grades g
-            JOIN courses c ON g.course_id = c.id
-            WHERE g.user_id = ?
-        `;
-        db.query(query, [userId], (err, results) => {
-            if (err) {
-                console.error("Error al consultar notas:", err);
-                return saveAndSendResponse("Tuve un problema al consultar tus notas en este momento. Por favor, inténtalo de nuevo más tarde.", question, userId, res);
-            }
-            
+        try {
+            const token = req.headers.authorization;
+            const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+            const gradesResponse = await axios.get(`${baseURL}/api/academic/grades`, {
+                headers: { 'Authorization': token }
+            });
+            const grades = gradesResponse.data;
             let gradesContext;
-            if (results.length === 0) {
+
+            if (grades.length === 0) {
                 gradesContext = "El estudiante no tiene notas registradas para el semestre actual.";
             } else {
-                const gradesWithFinal = results.map(grade => {
-                    const final = (grade.corte1 * 0.3) + (grade.corte2 * 0.3) + (grade.corte3 * 0.4);
-                    return `- Materia: ${grade.course_name}, Corte 1: ${grade.corte1}, Corte 2: ${grade.corte2}, Corte 3: ${grade.corte3}, Definitiva: ${parseFloat(final.toFixed(1))}`;
-                });
-                gradesContext = "Aquí está tu rendimiento académico:\n" + gradesWithFinal.join('\n');
+                gradesContext = "Aquí está tu rendimiento académico:\n" + grades.map(g => 
+                    `- Materia: ${g.materia}, Corte 1: ${g.corte1}, Corte 2: ${g.corte2}, Corte 3: ${g.corte3}, Definitiva: ${g.definitiva}`
+                ).join('\n');
             }
             const finalPrompt = `${basePrompt}\n\n--- Contexto de Notas del Estudiante ---\n${gradesContext}`;
             return generateGeminiResponse(finalPrompt, question, userId, res);
-        });
+        } catch (apiError) {
+            console.error("Error al llamar a la API de notas interna:", apiError.message);
+            return saveAndSendResponse("Tuve un problema al consultar tus notas en este momento. Por favor, inténtalo de nuevo más tarde.", question, userId, res);
+        }
+      }
 
+      let info;
+      let cacheKey;
+      let contextTitle = 'Contexto Externo';
+
+      if (isNewsQuestion) {
+        cacheKey = 'latestNews';
+        contextTitle = 'Contexto de Últimas Noticias';
+      } else if (isMissionQuestion) {
+        cacheKey = 'missionVision';
+        contextTitle = 'Contexto Institucional';
+      } else if (isCalendarQuestion) {
+        cacheKey = 'academicCalendar';
+        contextTitle = 'Contexto de Calendario Académico';
+      }
+
+      if (cacheKey && cache[cacheKey] && (Date.now() - cache[cacheKey].timestamp < CACHE_DURATION_MS)) {
+        console.log(`✅ Usando datos desde el caché para: ${cacheKey}`);
+        info = cache[cacheKey].data;
+      } else if (cacheKey) {
+        console.log(`🔄 Realizando scraping en tiempo real para: ${cacheKey}`);
+        if (isNewsQuestion) info = await scrapeLatestNews();
+        if (isMissionQuestion) info = await scrapeUtsMissionVision();
+        if (isCalendarQuestion) info = await scrapeAcademicCalendar();
+        if (info && !info.includes("Hubo un error")) {
+          cache[cacheKey] = { data: info, timestamp: Date.now() };
+        }
+      }
+
+      if (info) {
+        if (info.includes("Hubo un error")) return res.status(200).json({ answer: info });
+        const truncatedInfo = info.substring(0, 4000);
+        const finalPrompt = `${basePrompt}\n\n--- ${contextTitle} ---\n${truncatedInfo}`;
+        return generateGeminiResponse(finalPrompt, question, userId, res);
       } else {
-        let info;
-        let cacheKey;
-        let contextTitle = 'Contexto Externo';
-
-        if (isNewsQuestion) {
-          cacheKey = 'latestNews';
-          contextTitle = 'Contexto de Últimas Noticias';
-        } else if (isMissionQuestion) {
-          cacheKey = 'missionVision';
-          contextTitle = 'Contexto Institucional';
-        } else if (isCalendarQuestion) {
-          cacheKey = 'academicCalendar';
-          contextTitle = 'Contexto de Calendario Académico';
-        }
-
-        if (cacheKey && cache[cacheKey] && (Date.now() - cache[cacheKey].timestamp < CACHE_DURATION_MS)) {
-          console.log(`✅ Usando datos desde el caché para: ${cacheKey}`);
-          info = cache[cacheKey].data;
-        } else if (cacheKey) {
-          console.log(`🔄 Realizando scraping en tiempo real para: ${cacheKey}`);
-          if (isNewsQuestion) info = await scrapeLatestNews();
-          if (isMissionQuestion) info = await scrapeUtsMissionVision();
-          if (isCalendarQuestion) info = await scrapeAcademicCalendar();
-          if (info && !info.includes("Hubo un error")) {
-            cache[cacheKey] = { data: info, timestamp: Date.now() };
-          }
-        }
-
-        if (info) {
-          if (info.includes("Hubo un error")) return res.status(200).json({ answer: info });
-          const truncatedInfo = info.substring(0, 4000);
-          const finalPrompt = `${basePrompt}\n\n--- ${contextTitle} ---\n${truncatedInfo}`;
-          return generateGeminiResponse(finalPrompt, question, userId, res);
-        } else {
-          return generateGeminiResponse(basePrompt, question, userId, res);
-        }
+        return generateGeminiResponse(basePrompt, question, userId, res);
       }
     });
   } catch (error) {
