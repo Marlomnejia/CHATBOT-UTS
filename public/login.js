@@ -5,35 +5,44 @@ const passwordInput = document.getElementById('password');
 const googleSignInBtn = document.getElementById('google-signin-btn');
 const auth = firebase.auth();
 
-// --- LOGIN CON GOOGLE (MÉTODO POPUP) ---
-googleSignInBtn.addEventListener('click', async () => {
+// --- LOGIN CON GOOGLE (MÉTODO DE REDIRECCIÓN) ---
+googleSignInBtn.addEventListener('click', () => {
     errorMessage.textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
-
-    try {
-        // Abrimos el popup de Google
-        const result = await auth.signInWithPopup(provider);
-
-        // Obtenemos el token de Firebase
-        const token = await result.user.getIdToken();
-        localStorage.setItem('authToken', token);
-
-        // Informamos a nuestro backend (creación o validación de usuario)
-        await fetch('/api/auth/google-signin', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        // Redirigimos según rol
-        await redirectToPanel(token);
-
-    } catch (error) {
-        console.error(error);
-        errorMessage.textContent = 'Error al iniciar sesión con Google.';
-    }
+    // 1. Redirige al usuario a la página de Google para iniciar sesión
+    auth.signInWithRedirect(provider);
 });
 
-// --- LOGIN CON CORREO Y CONTRASEÑA ---
+// --- MANEJO DEL RESULTADO DE LA REDIRECCIÓN ---
+// Esta función se ejecuta automáticamente CADA VEZ que la página de login carga
+(async function handleRedirectResult() {
+    try {
+        // 2. Intenta obtener el resultado de la redirección
+        const result = await auth.getRedirectResult();
+        
+        // 3. Si 'result.user' existe, significa que el usuario acaba de volver de Google
+        if (result.user) {
+            errorMessage.textContent = 'Iniciando sesión...'; // Mensaje de carga
+            const token = await result.user.getIdToken();
+            localStorage.setItem('authToken', token);
+
+            // 4. Informar a nuestro backend sobre el inicio de sesión para que lo guarde en la BD si es nuevo
+            await fetch('/api/auth/google-signin', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            // 5. Redirigir al panel correspondiente
+            await redirectToPanel(token);
+        }
+    } catch (error) {
+        // Si hay un error, lo mostramos (ej. la cuenta de Google fue deshabilitada)
+        errorMessage.textContent = 'Error al procesar el inicio de sesión con Google.';
+    }
+})();
+
+
+// --- LOGIN CON CORREO Y CONTRASEÑA (sin cambios) ---
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
@@ -57,30 +66,45 @@ loginForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- MOSTRAR/OCULTAR CONTRASEÑA ---
+// --- MOSTRAR/OCULTAR CONTRASEÑA (sin cambios) ---
 togglePassword.addEventListener('click', () => {
     const isPassword = passwordInput.type === 'password';
     passwordInput.type = isPassword ? 'text' : 'password';
     togglePassword.textContent = isPassword ? 'visibility' : 'visibility_off';
 });
 
-// --- FUNCIÓN DE REDIRECCIÓN SEGÚN ROL ---
+// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE (sin cambios) ---
 async function redirectToPanel(token) {
-    try {
-        const profileResponse = await fetch('/api/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!profileResponse.ok) {
-            const profileError = await profileResponse.json();
-            throw new Error(profileError.message);
+    let attempts = 0;
+    let lastError = null;
+    while (attempts < 3) {
+        try {
+            const profileResponse = await fetch('/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!profileResponse.ok) {
+                const profileError = await profileResponse.json();
+                lastError = profileError.message;
+                // Si el usuario no existe, espera y reintenta
+                if (profileError.message === 'Usuario no encontrado.') {
+                    await new Promise(res => setTimeout(res, 1000));
+                    attempts++;
+                    continue;
+                }
+                throw new Error(profileError.message);
+            }
+            const profileData = await profileResponse.json();
+            if (profileData.role === 'admin') {
+                window.location.href = '/admin.html';
+            } else {
+                window.location.href = '/chat.html';
+            }
+            return;
+        } catch (error) {
+            lastError = error.message;
+            await new Promise(res => setTimeout(res, 1000));
+            attempts++;
         }
-        const profileData = await profileResponse.json();
-        if (profileData.role === 'admin') {
-            window.location.href = '/admin.html';
-        } else {
-            window.location.href = '/chat.html';
-        }
-    } catch (error) {
-        errorMessage.textContent = error.message || 'No se pudo verificar el perfil del usuario.';
     }
+    errorMessage.textContent = lastError || 'No se pudo verificar el perfil del usuario.';
 }
