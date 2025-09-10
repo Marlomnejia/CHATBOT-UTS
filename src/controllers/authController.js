@@ -34,11 +34,13 @@ exports.googleSignIn = (req, res) => {
 
 // Obtiene los datos del usuario logueado
 exports.getMe = (req, res) => {
-  const userId = req.user.id;
-  db.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId], (error, results) => {
-    if (error || results.length === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado." });
-    }
-    res.status(200).json(results[0]);
-  });
+    const userId = req.user.id;
+    console.log('Buscando usuario en la BD con id:', userId);
+    db.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId], (error, results) => {
+        console.log('Resultado de la consulta:', results, 'Error:', error);
+        if (error || results.length === 0) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+        res.status(200).json(results[0]);
+    });
 };
