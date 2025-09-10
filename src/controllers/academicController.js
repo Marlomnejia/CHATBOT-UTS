@@ -1,11 +1,10 @@
-// src/controllers/academicController.js
 const db = require('../config/db');
 
 /**
  * Obtiene las notas del estudiante autenticado y calcula la definitiva.
  */
 exports.getStudentGrades = (req, res) => {
-    const userId = req.user.id; // ahora lo obtenemos del JWT
+    const userId = req.user.id;
 
     const query = `
         SELECT 
@@ -20,10 +19,9 @@ exports.getStudentGrades = (req, res) => {
 
     db.query(query, [userId], (error, results) => {
         if (error) {
-            console.error("Error en la consulta de notas:", error);
             return res.status(500).json({ message: 'Error al consultar las notas.' });
         }
-
+        
         if (results.length === 0) {
             return res.status(200).json([]);
         }

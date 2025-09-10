@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const academicController = require('../controllers/academicController');
+const { firebaseAuthMiddleware } = require('../middleware/authMiddleware');
 
-// Asegúrate de que el middleware se exporte correctamente y que el nombre sea "authMiddleware"
-const { authMiddleware } = require('../middleware/authMiddleware');
-
-router.get('/grades', authMiddleware, academicController.getStudentGrades);
+// Esta es la línea 8 que probablemente causa el error.
+// Asegúrate de que academicController.getStudentGrades sea una función válida.
+router.get('/grades', firebaseAuthMiddleware, academicController.getStudentGrades);
 
 module.exports = router;
