@@ -4,17 +4,18 @@ const db = require('../config/db');
 // Middleware para proteger rutas, verificando el token de Firebase
 exports.firebaseAuthMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
+    console.log('Auth header recibido:', authHeader);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('Token ausente o formato incorrecto');
         return res.status(401).json({ message: 'No hay token o tiene un formato incorrecto, autorización denegada.' });
     }
 
     const token = authHeader.split('Bearer ')[1];
-    
+    console.log('Token recibido:', token);
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
-        
+        console.log('Token decodificado:', decodedToken);
         // Adjuntamos la información básica del token a la petición
-        // La info completa (nombre, rol) la buscaremos en la BD si es necesario
         req.user = { 
             uid: decodedToken.uid,
             name: decodedToken.name,
@@ -23,9 +24,7 @@ exports.firebaseAuthMiddleware = async (req, res, next) => {
 
         db.query('SELECT role FROM users WHERE id = ?', [decodedToken.uid], (error, results) => {
             if (error || results.length === 0) {
-                // Si no está en nuestra BD, aún podemos dejarlo pasar, pero sin rol.
-                // O podemos negarlo. Por ahora, lo dejamos pasar sin rol.
-                // Para la función 'getMe' y otras, es crucial que el usuario exista en la BD.
+                console.log('Usuario no encontrado en la base de datos o error en la consulta:', error);
                 req.user.role = results.length > 0 ? results[0].role : 'student';
                 return next();
             }
@@ -34,8 +33,8 @@ exports.firebaseAuthMiddleware = async (req, res, next) => {
             next();
         });
     } catch (error) {
-        console.error("Error verificando el token:", error);
-        res.status(403).json({ message: 'Token no es válido.' });
+        console.error('Error verificando el token:', error);
+        res.status(403).json({ message: 'Token no es válido.', error: error.message, code: error.code });
     }
 };
 
