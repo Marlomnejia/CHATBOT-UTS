@@ -5,7 +5,7 @@ const passwordInput = document.getElementById('password');
 const googleSignInBtn = document.getElementById('google-signin-btn');
 const auth = firebase.auth();
 
-// --- LOGIN CON GOOGLE (MÉTODO POP-UP FINAL) ---
+// --- LÓGICA PARA INICIO DE SESIÓN CON GOOGLE ---
 googleSignInBtn.addEventListener('click', () => {
     errorMessage.textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -14,13 +14,13 @@ googleSignInBtn.addEventListener('click', () => {
             const token = await result.user.getIdToken();
             localStorage.setItem('authToken', token);
 
-            // Informar a nuestro backend sobre el inicio de sesión
+            // Informar a nuestro backend sobre el inicio de sesión para que verifique o cree el registro
             await fetch('/api/auth/google-signin', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // Redirigir al panel
+            // Redirigir al panel correspondiente
             await redirectToPanel(token);
         })
         .catch((error) => {
@@ -32,7 +32,7 @@ googleSignInBtn.addEventListener('click', () => {
         });
 });
 
-// --- LOGIN CON CORREO Y CONTRASEÑA ---
+// --- LÓGICA PARA INICIO DE SESIÓN CON CORREO Y CONTRASEÑA ---
 loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.textContent = '';
@@ -63,7 +63,7 @@ togglePassword.addEventListener('click', () => {
     togglePassword.textContent = isPassword ? 'visibility' : 'visibility_off';
 });
 
-// --- FUNCIÓN DE REDIRECCIÓN INTELIGENTE ---
+// --- FUNCIÓN AUXILIAR PARA REDIRECCIÓN INTELIGENTE ---
 async function redirectToPanel(token) {
     try {
         const profileResponse = await fetch('/api/auth/me', {
