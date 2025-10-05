@@ -18,7 +18,6 @@ pipeline {
             }
         }
 
-
         stage('Test') {
             steps {
                 bat 'npm run test'
@@ -27,8 +26,25 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "🚀 Lanzando la aplicación..."
+                echo "🚀 Lanzando la aplicación localmente..."
                 bat 'start cmd /c "npm run start"'
+                sleep time: 5, unit: 'SECONDS'
+                echo "✅ Aplicación levantada localmente"
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                echo "🔍 Verificando que la aplicación esté levantada..."
+                bat '''
+                curl -s http://localhost:3000 >nul
+                IF %ERRORLEVEL% NEQ 0 (
+                    echo ❌ La aplicación no respondió correctamente.
+                    exit /b 1
+                ) ELSE (
+                    echo ✅ Aplicación verificada correctamente.
+                )
+                '''
             }
         }
     }
