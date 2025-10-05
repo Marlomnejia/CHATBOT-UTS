@@ -5,17 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot Académico UTS</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="chat-list.css">
+    <link rel="stylesheet" href="dark-mode.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
+<body class="dark-mode">
     <div class="main-container">
         <div class="sidebar">
             <div class="sidebar-header">
                 <img src="images/logo-uts.png" alt="Logo UTS">
                 <h3>Chatbot UTS</h3>
             </div>
-            <div class="sidebar-content">
-                <p id="welcome-message">Bienvenido al asistente académico de las Unidades Tecnológicas de Santander.</p>
+            <div class="chat-controls">
+                <button id="new-chat-btn" class="new-chat-btn">
+                    <span class="material-icons">add</span>
+                    Nuevo Chat
+                </button>
+                <button id="delete-all-chats-btn" class="new-chat-btn delete-all-btn">
+                    <span class="material-icons">delete_sweep</span>
+                    Eliminar Todos
+                </button>
+            </div>
+            <div class="chat-list" id="chat-list">
+                <!-- Los chats se cargarán aquí dinámicamente -->
             </div>
             <div class="sidebar-footer">
                 <button id="logout-btn">Cerrar Sesión</button>

@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Chatbot UTS</title>
     <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="dark-mode.css">
 </head>
-<body>
+<body class="dark-mode">
     <div class="login-container">
         <div class="login-card">
             <img src="images/logo-uts.png" alt="Logo UTS" class="login-logo">
@@ -33,23 +34,6 @@
             <p id="message"></p>
         </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script>
-      // Tu configuración de Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyCLGjA_9emkZFz9OiyveGyg4M_5uIK5ohM",
-        authDomain: "chat-b-9dccc.firebaseapp.com",
-        projectId: "chat-b-9dccc",
-        storageBucket: "chat-b-9dccc.firebasestorage.app",
-        messagingSenderId: "546850192040",
-        appId: "1:546850192040:web:f9c8ad7cd86247992fa09d",
-        measurementId: "G-SR61NDYQ91"
-        };
-      // Inicializar Firebase
-      firebase.initializeApp(firebaseConfig);
-    </script>
 
     <script src="register.js"></script>
 </body>

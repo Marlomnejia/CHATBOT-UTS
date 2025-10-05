@@ -1,62 +1,45 @@
 const registerForm = document.getElementById('register-form');
 const messageElement = document.getElementById('message');
-const auth = firebase.auth();
 
 registerForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+
     messageElement.textContent = '';
     messageElement.className = '';
 
-    const name = event.target.name.value;
-    const email = event.target.email.value;
-    const password = event.target.password.value;
+    const name = event.target.name.value.trim();
+    const email = event.target.email.value.trim();
+    const password = event.target.password.value.trim();
+
+    if (!name || !email || !password) {
+        messageElement.textContent = "Todos los campos son obligatorios.";
+        messageElement.classList.add('error');
+        return;
+    }
 
     try {
-        // 1. Crear el usuario en Firebase Authentication
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-
-        // 2. Añadir el nombre al perfil del usuario en Firebase
-        await user.updateProfile({
-            displayName: name
-        });
-        
-        // 3. Enviar el correo de verificación
-        await user.sendEmailVerification();
-        
-        // 4. Obtener un token para autenticar la creación del registro en nuestra BD
-        const token = await user.getIdToken();
-
-        // 5. Informar a nuestro backend sobre el nuevo usuario de forma segura
-        const response = await fetch('/api/auth/create-user-record', {
+        const response = await fetch('/api/auth/register', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
         });
 
-        if (!response.ok) {
-            throw new Error('No se pudo guardar el registro del usuario en el servidor.');
-        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Error en el registro");
 
-        messageElement.textContent = "¡Registro exitoso! Por favor, revisa tu bandeja de entrada para verificar tu correo.";
+        messageElement.textContent = "✅ ¡Registro exitoso! Serás redirigido para iniciar sesión.";
         messageElement.classList.add('success');
-        
-        auth.signOut(); // Desloguear al usuario para que verifique su correo antes de entrar
+
+        // 🔑 Señal clara para Cypress
+        messageElement.id = "register-success";
 
         setTimeout(() => {
             window.location.href = '/login.html';
-        }, 5000);
+        }, 3000);
 
     } catch (error) {
-        if (error.code === 'auth/email-already-in-use') {
-            messageElement.textContent = 'El correo electrónico ya está registrado.';
-        } else if (error.code === 'auth/weak-password') {
-            messageElement.textContent = 'La contraseña debe tener al menos 6 caracteres.';
-        } else {
-            messageElement.textContent = error.message || 'Hubo un error al registrar la cuenta.';
-        }
+        messageElement.textContent = error.message;
         messageElement.classList.add('error');
+        messageElement.id = "register-error"; // Para Cypress
     }
 });

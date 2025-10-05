@@ -1,0 +1,290 @@
+
+/* --- Dark Mode --- */
+
+body.dark-mode {
+    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+    color: #e0e0e0;
+}
+
+.dark-mode .sidebar {
+    background-color: rgba(31, 31, 31, 0.6); /* Transparencia oscura */
+    border-right: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+}
+
+.dark-mode .sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .sidebar-header h3 {
+    color: #ffffff;
+}
+
+.dark-mode #logout-btn {
+    background: #333;
+    color: #e0e0e0;
+}
+
+.dark-mode #logout-btn:hover {
+    background-color: #444;
+}
+
+.dark-mode .chat-container {
+    background-color: transparent;
+}
+
+.dark-mode .chat-box {
+    background-color: transparent;
+}
+
+.dark-mode .bot-message {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borde claro sutil en modo oscuro */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+}
+
+.dark-mode .chat-input-form {
+    background-color: transparent;
+    border-top: none;
+}
+
+.dark-mode .input-container {
+    background-color: rgba(31, 31, 31, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.dark-mode #user-input {
+    color: #e0e0e0;
+}
+
+.dark-mode #user-input::placeholder {
+    color: #bbbbbb;
+    opacity: 1;
+}
+
+.dark-mode .send-btn {
+    background: #00833d;
+}
+
+.dark-mode .send-btn:hover {
+    background: #006b32;
+}
+
+.dark-mode .chat-controls {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .new-chat-btn {
+    background-color: #00833d;
+}
+
+.dark-mode .new-chat-btn:hover {
+    background-color: #006e33;
+}
+
+.dark-mode .chat-item {
+    background-color: #2b2b2b;
+}
+
+.dark-mode .chat-item:hover {
+    background-color: #333;
+}
+
+.dark-mode .chat-item.active {
+    background-color: #333;
+    border-left: 4px solid #00833d;
+}
+
+.dark-mode .chat-date {
+    color: #aaa;
+}
+
+.dark-mode .chat-message-preview {
+    color: #e0e0e0;
+}
+
+.dark-mode .delete-chat {
+    color: #ff4d4d;
+}
+
+.dark-mode .delete-chat:hover {
+    background-color: rgba(255, 77, 77, 0.1);
+}
+
+.dark-mode .suggestion-btn {
+    background-color: rgba(43, 43, 43, 0.7); /* Fondo oscuro semitransparente */
+    border: 1px solid rgba(0, 131, 61, 0.8); /* Borde verde más brillante */
+    color: #f0f0f0; /* Color de texto claro */
+}
+
+.dark-mode .suggestion-btn:hover {
+    background-color: #00833d;
+    color: white;
+}
+
+.dark-mode .suggestion-btn:hover {
+    background-color: #00833d;
+    color: white;
+}
+
+/* --- Login Dark Mode -- */
+.dark-mode .login-card {
+    background-color: rgba(31, 31, 31, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.dark-mode .login-card h1 {
+    color: #ffffff;
+}
+
+.dark-mode .slogan {
+    color: #bbbbbb;
+}
+
+.dark-mode .input-group label {
+    color: #dddddd;
+}
+
+.dark-mode .input-group input {
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    color: #e0e0e0;
+}
+
+.dark-mode .register-link,
+.dark-mode .login-link {
+    color: #bbbbbb;
+}
+
+.dark-mode .register-link a,
+.dark-mode .login-link a {
+    color: #00aaff;
+}
+
+.dark-mode .toggle-password {
+    color: #888;
+}
+
+/* --- Admin Dark Mode -- */
+.dark-mode body {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+.dark-mode .admin-header {
+    background: #1f1f1f;
+}
+
+.dark-mode .admin-content {
+    background-color: #121212;
+}
+
+.dark-mode .content-card {
+    background-color: #1f1f1f;
+    border: 1px solid #333;
+}
+
+.dark-mode .content-card h3 {
+    color: #ffffff;
+    border-bottom: 1px solid #333;
+}
+
+.dark-mode input, .dark-mode textarea {
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    color: #e0e0e0;
+}
+
+.dark-mode th {
+    color: #bbbbbb;
+}
+
+.dark-mode td {
+    color: #e0e0e0;
+    border-bottom: 1px solid #333;
+}
+
+.dark-mode thead {
+    background-color: #2b2b2b;
+}
+
+.dark-mode tbody tr:hover {
+    background-color: #333;
+}
+
+.dark-mode .modal-content {
+    background: #1f1f1f;
+}
+
+.dark-mode .modal-header {
+    border-bottom: 1px solid #333;
+}
+
+.dark-mode .close-modal {
+    color: #aaa;
+}
+
+.dark-mode .close-modal:hover {
+    color: #ff4d4d;
+}
+
+.dark-mode .btn-secondary {
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+.dark-mode .btn-secondary:hover {
+    background-color: #444;
+}
+
+#theme-toggle-btn.fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #00833d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+#theme-toggle-btn.fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode #theme-toggle-btn.fab {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+    border: 1px solid #333;
+}
+
+.sidebar-header #theme-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #00833d;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 0;
+}
+
+.sidebar-header #theme-toggle-btn:hover {
+    opacity: 0.8;
+}
+
+.dark-mode .sidebar-header #theme-toggle-btn {
+    color: white;
+}

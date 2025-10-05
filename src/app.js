@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const db = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,15 +11,17 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const faqRoutes = require('./routes/faqRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
-const academicRoutes = require('./routes/academicRoutes');
-const adminRoutes = require('./routes/adminRoutes'); // <-- Añadido
+const adminRoutes = require('./routes/adminRoutes');
+const testRoutes = require('./routes/testRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Usar todas las rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/chat', chatbotRoutes);
-app.use('/api/academic', academicRoutes);
-app.use('/api/admin', adminRoutes); // <-- Añadido
+app.use('/api/admin', adminRoutes);
+app.use('/api/test', testRoutes);
+app.use('/api/chats', chatRoutes);
 
 // Ruta de redirección a la raíz
 app.get('/', (req, res) => {

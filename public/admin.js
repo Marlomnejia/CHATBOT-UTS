@@ -1,64 +1,102 @@
-// --- ELEMENTOS DEL DOM ---
 const faqListBody = document.getElementById('faq-list');
 const createForm = document.getElementById('create-faq-form');
 const logoutBtn = document.getElementById('logout-btn');
 const editModal = document.getElementById('edit-modal');
 const editForm = document.getElementById('edit-faq-form');
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const searchFaqInput = document.getElementById('search-faq');
 
-// --- CÓDIGO DE INICIALIZACIÓN ---
-document.addEventListener('DOMContentLoaded', () => {
-    initializeAdminPanel();
-});
+let allFaqs = []; // Store all FAQs
 
-async function initializeAdminPanel() {
+document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('authToken');
-    const userId = localStorage.getItem('userId');
-    
-    // Si no hay token o userId, no hay acceso.
-    if (!token || !userId) {
-        alert('Sesión inválida. Por favor, inicia sesión de nuevo.');
+    if (!token) {
+        alert('Sesión inválida. Por favor, inicia sesión.');
         window.location.href = '/login.html';
         return;
     }
 
     try {
-        const user = await verifyAdmin(token, userId);
-        if (user.role === 'admin') {
-            loadFaqs(token, userId);
-        } else {
-            alert('Acceso denegado. Se requiere rol de administrador.');
-            window.location.href = '/chat.html';
-        }
+        await verifyAdmin(token);
+        loadFaqs(token);
     } catch (error) {
         alert(error.message);
         localStorage.removeItem('authToken');
-        localStorage.removeItem('userId');
         window.location.href = '/login.html';
     }
-}
 
-async function verifyAdmin(token, userId) {
-    const response = await fetch('/api/auth/me', { 
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': userId
-        } 
+    // --- DARK MODE TOGGLE ---
+    const body = document.body;
+    themeToggleBtn.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        if (body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+        } else {
+            localStorage.setItem('theme', 'light');
+        }
     });
-    if (!response.ok) {
-        throw new Error('Sesión inválida.');
+
+    // Apply theme from localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        body.classList.add('dark-mode');
     }
-    return await response.json();
+
+    // --- TAB SWITCHING ---
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            const tabId = link.dataset.tab;
+
+            tabLinks.forEach(link => link.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            link.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // --- SEARCH FAQ ---
+    searchFaqInput.addEventListener('input', () => {
+        const searchTerm = normalizeText(searchFaqInput.value);
+        const filteredFaqs = allFaqs.filter(faq => 
+            normalizeText(faq.question).includes(searchTerm)
+        );
+        renderFaqs(filteredFaqs);
+    });
+});
+
+// --- Normalize Text ---
+function normalizeText(text) {
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-// --- LÓGICA CRUD ---
-async function loadFaqs(token, userId) {
-    const response = await fetch('/api/faqs', { 
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': userId
-        } 
+// --- Verificar admin ---
+async function verifyAdmin(token) {
+    const response = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
     });
-    const faqs = await response.json();
+    if (!response.ok) throw new Error('Sesión inválida o no autorizada.');
+
+    const user = await response.json();
+    if (user.role !== 'admin') throw new Error('Acceso denegado. Se requiere rol de administrador.');
+
+    return user;
+}
+
+// --- Cargar FAQs ---
+async function loadFaqs(token) {
+    const response = await fetch('/api/faqs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    allFaqs = await response.json();
+    renderFaqs(allFaqs);
+}
+
+// --- Render FAQs ---
+function renderFaqs(faqs) {
     faqListBody.innerHTML = '';
     faqs.forEach(faq => {
         const row = document.createElement('tr');
@@ -79,15 +117,23 @@ async function loadFaqs(token, userId) {
     });
 }
 
-// Event listener único para la tabla (más robusto)
-faqListBody.addEventListener('click', (event) => {
+// --- CRUD de FAQs ---
+faqListBody.addEventListener('click', async (event) => {
     const target = event.target;
     const row = target.closest('tr');
     if (!row) return;
 
+    const token = localStorage.getItem('authToken');
+
     if (target.classList.contains('delete-icon')) {
-        deleteFaq(row.dataset.id);
+        if (!confirm('¿Estás seguro de que quieres eliminar esta FAQ?')) return;
+        await fetch(`/api/faqs/${row.dataset.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        loadFaqs(token);
     }
+
     if (target.classList.contains('edit-icon')) {
         openEditModal(row.dataset.id, row.dataset.question, row.dataset.answer);
     }
@@ -96,48 +142,59 @@ faqListBody.addEventListener('click', (event) => {
 createForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const token = localStorage.getItem('authToken');
-    const userId = localStorage.getItem('userId');
-    const question = event.target.question.value;
-    const answer = event.target.answer.value;
-    
+    const question = event.target.question.value.trim();
+    const answer = event.target.answer.value.trim();
+
+    if (!question || !answer) return alert("Todos los campos son obligatorios");
+
     await fetch('/api/faqs', {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': userId
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ question, answer })
     });
-    
+
     createForm.reset();
-    document.querySelector('.create-faq-accordion').open = false;
-    loadFaqs(token, userId);
+    loadFaqs(token);
+
+    // ✅ Feedback para Cypress
+    let successMsg = document.getElementById('success-message');
+    if (!successMsg) {
+        successMsg = document.createElement('p');
+        successMsg.id = "success-message";
+        successMsg.style.color = "green";
+        createForm.insertAdjacentElement('afterend', successMsg);
+    }
+    successMsg.textContent = "FAQ creada exitosamente";
+
+    setTimeout(() => successMsg.remove(), 3000);
 });
 
-async function deleteFaq(id) {
+editForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
     const token = localStorage.getItem('authToken');
-    const userId = localStorage.getItem('userId');
-    if (!confirm('¿Estás seguro de que quieres eliminar esta FAQ?')) return;
-    
-    await fetch(`/api/faqs/${id}`, { 
-        method: 'DELETE', 
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': userId
-        } 
-    });
-    
-    loadFaqs(token, userId);
-}
+    const id = event.target['edit-faq-id'].value;
+    const question = event.target['edit-question'].value.trim();
+    const answer = event.target['edit-answer'].value.trim();
 
-logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    window.location.href = '/login.html';
+    if (!question || !answer) return alert("Todos los campos son obligatorios");
+
+    await fetch(`/api/faqs/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ question, answer })
+    });
+
+    closeEditModal();
+    loadFaqs(token);
 });
 
-// --- FUNCIONES PARA EL MODAL ---
+// --- Modal ---
 function openEditModal(id, question, answer) {
     editForm.elements['edit-faq-id'].value = id;
     editForm.elements['edit-question'].value = question;
@@ -149,24 +206,8 @@ function closeEditModal() {
     editModal.classList.remove('visible');
 }
 
-editForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const token = localStorage.getItem('authToken');
-    const userId = localStorage.getItem('userId');
-    const id = editForm.elements['edit-faq-id'].value;
-    const question = editForm.elements['edit-question'].value;
-    const answer = editForm.elements['edit-answer'].value;
-    
-    await fetch(`/api/faqs/${id}`, {
-        method: 'PUT',
-        headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': userId
-        },
-        body: JSON.stringify({ question, answer })
-    });
-    
-    closeEditModal();
-    loadFaqs(token, userId);
+// --- Logout ---
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('authToken');
+    window.location.href = '/login.html';
 });

@@ -1,14 +1,20 @@
 # Dependencias
 /node_modules
 
-# Archivos de entorno y credenciales
+# Variables de entorno
 .env
-serviceAccountKey.json
+.env.*
 
-# Archivos de sistema operativo
-.DS_Store
-Thumbs.db
+# Archivos de VSCode (opcional, pero común ignorar)
+.vscode/
 
-# Archivos de depuración
-debug-news.png
+# Logs y archivos de compilación
+/dist
+/build
 
+# Archivos de Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Archivos de la base de datos o migración 
+prisma/*.sql

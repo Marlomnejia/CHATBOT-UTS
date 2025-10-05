@@ -31,11 +31,37 @@ body {
     border-radius: 0 0 12px 12px;
 }
 
-/* --- DISEÑO DE GRID --- */
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr; /* Columna izquierda 1/3, derecha 2/3 */
-    gap: 30px;
+/* --- DISEÑO DE PESTAÑAS --- */
+.tab-navigation {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 30px;
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #555;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.tab-link.active {
+    color: #00833d;
+    border-bottom-color: #00833d;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 .content-card {
@@ -56,6 +82,19 @@ input:focus, textarea:focus { border-color: #00833d; box-shadow: 0 0 0 2px rgba(
 textarea { min-height: 120px; resize: vertical; }
 #create-faq-form button { padding: 12px 25px; background-color: #00833d; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
 #create-faq-form button:hover { background-color: #006b32; }
+
+.search-container {
+    margin-bottom: 20px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
 
 .table-container { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }

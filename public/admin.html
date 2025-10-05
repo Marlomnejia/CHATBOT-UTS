@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administrador</title>
     <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="dark-mode.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -15,43 +16,45 @@
         </header>
 
         <main class="admin-content">
-            <div class="content-grid">
-                <div class="grid-left">
-                    <div class="content-card">
-                        <details class="create-faq-accordion" open>
-                            <summary>
-                                <h3><span class="material-icons">add_circle</span> Crear Nueva FAQ</h3>
-                            </summary>
-                            <form id="create-faq-form">
-                                <div class="input-group">
-                                    <label for="question">Pregunta</label>
-                                    <input type="text" id="question" name="question" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="answer">Respuesta</label>
-                                    <textarea id="answer" name="answer" required></textarea>
-                                </div>
-                                <button type="submit">Guardar FAQ</button>
-                            </form>
-                        </details>
-                    </div>
-                </div>
-                <div class="grid-right">
-                    <div class="content-card">
-                        <h3><span class="material-icons">list_alt</span> Gestionar FAQs Existentes</h3>
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Pregunta</th>
-                                        <th>Respuesta</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="faq-list">
-                                    </tbody>
-                            </table>
+            <div class="tab-navigation">
+                <button class="tab-link active" data-tab="create-faq">Crear FAQ</button>
+                <button class="tab-link" data-tab="manage-faqs">Gestionar FAQs</button>
+            </div>
+
+            <div id="create-faq" class="tab-content active">
+                <div class="content-card">
+                    <form id="create-faq-form">
+                        <div class="input-group">
+                            <label for="question">Pregunta</label>
+                            <input type="text" id="question" name="question" required>
                         </div>
+                        <div class="input-group">
+                            <label for="answer">Respuesta</label>
+                            <textarea id="answer" name="answer" required></textarea>
+                        </div>
+                        <button type="submit">Guardar FAQ</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="manage-faqs" class="tab-content">
+                <div class="content-card">
+                    <div class="search-container">
+                        <input type="text" id="search-faq" placeholder="Buscar por pregunta...">
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Pregunta</th>
+                                    <th>Respuesta</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faq-list">
+                                <!-- FAQs will be loaded here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -82,6 +85,7 @@
         </div>
     </div>
 
+    <button id="theme-toggle-btn" class="fab"><span class="material-icons">brightness_4</span></button>
     <script src="admin.js"></script>
 </body>
 </html>

@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { firebaseAuthMiddleware } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
-// Esta es la línea 6 que probablemente causa el error.
-// Asegúrate de que authController.createUserRecord sea una función válida.
-router.post('/create-user-record', firebaseAuthMiddleware, authController.createUserRecord);
+// Rutas para registro e inicio de sesión local
+router.post('/register', authController.register);
+router.post('/login', authController.login);
 
-router.post('/google-signin', firebaseAuthMiddleware, authController.googleSignIn);
-
-router.get('/me', firebaseAuthMiddleware, authController.getMe);
+// Ruta protegida para obtener el perfil del usuario
+router.get('/me', protect, authController.getMe);
 
 module.exports = router;

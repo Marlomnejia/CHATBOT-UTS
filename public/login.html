@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Chatbot UTS</title>
     <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="dark-mode.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
+<body class="dark-mode">
     <div class="login-container">
         <div class="login-card">
             
@@ -29,13 +30,6 @@
                 <button type="submit">Ingresar</button>
             </form>
 
-            <div class="divider">o</div>
-
-            <button id="google-signin-btn" class="google-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
-                <span>Iniciar sesión con Google</span>
-            </button>
-            
             <p class="register-link">
                 ¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a>
             </p>
@@ -43,21 +37,6 @@
             <p id="error-message"></p>
         </div>
     </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyCLGjA_9emkZFz9OiyveGyg4M_5uIK5ohM",
-        authDomain: "chat-b-9dccc.firebaseapp.com",
-        projectId: "chat-b-9dccc",
-        storageBucket: "chat-b-9dccc.firebasestorage.app",
-        messagingSenderId: "546850192040",
-        appId: "1:546850192040:web:f9c8ad7cd86247992fa09d",
-        measurementId: "G-SR61NDYQ91"
-        };
-      firebase.initializeApp(firebaseConfig);
-    </script>
     
     <script src="login.js"></script>
 </body>

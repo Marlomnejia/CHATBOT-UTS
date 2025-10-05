@@ -1,57 +1,76 @@
-const admin = require('../config/firebaseAdmin');
-const db = require('../config/db');
+const prisma = require('../config/prisma');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-// Llamado por el frontend DESPUÉS de un registro exitoso en Firebase
-exports.createUserRecord = (req, res) => {
-    const { uid, name, email } = req.user;
-    const newUser = { id: uid, name, email, role: 'student' };
-    db.query('INSERT INTO users SET ?', newUser, (error) => {
-        if (error) {
-            console.error("Error guardando usuario en MySQL:", error);
-            admin.auth().deleteUser(uid);
-            return res.status(500).json({ message: 'Error al guardar el registro del usuario.' });
+// --- REGISTRO DE USUARIO LOCAL ---
+exports.register = async (req, res) => {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Por favor, ingrese todos los campos.' });
+    }
+
+    try {
+        const existingUser = await prisma.users.findUnique({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Ese correo electrónico ya está en uso.' });
         }
-        res.status(201).json({ message: 'Registro de usuario completado.' });
-    });
+
+        const hashedPassword = await bcrypt.hash(password, 8);
+        await prisma.users.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: 'student'
+            }
+        });
+
+        res.status(201).json({ message: 'Usuario registrado exitosamente.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al registrar el usuario.', error: error.message });
+    }
 };
 
-// Llamado por el frontend DESPUÉS de un login con Google
-exports.googleSignIn = (req, res) => {
-    const { uid, name, email } = req.user;
-    console.log('googleSignIn: uid:', uid, 'name:', name, 'email:', email);
-    db.query('SELECT * FROM users WHERE id = ?', [uid], (error, results) => {
-        console.log('Resultado de SELECT en googleSignIn:', results, 'Error:', error);
-        if (error) {
-            console.error('Error en la consulta SELECT:', error);
-            return res.status(500).json({ message: "Error en la base de datos.", error });
+// --- INICIO DE SESIÓN LOCAL ---
+exports.login = async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Por favor, ingrese su correo y contraseña.' });
+    }
+
+    try {
+        const user = await prisma.users.findUnique({ where: { email } });
+
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ message: 'Credenciales incorrectas.' });
         }
-        if (results.length > 0) {
-            console.log('Usuario ya existe en la BD.');
-            return res.status(200).json({ message: "Inicio de sesión con Google exitoso." });
-        } else {
-            const newUser = { id: uid, name, email, role: 'student' };
-            console.log('Intentando insertar nuevo usuario:', newUser);
-            db.query('INSERT INTO users SET ?', newUser, (err, insertResult) => {
-                if (err) {
-                    console.error('Error al registrar al usuario de Google:', err);
-                    return res.status(500).json({ message: "Error al registrar al usuario de Google.", error: err });
-                }
-                console.log('Usuario de Google registrado exitosamente:', insertResult);
-                return res.status(201).json({ message: "Usuario de Google registrado exitosamente." });
-            });
-        }
-    });
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        
+        res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
+    } catch (error) {
+        res.status(500).json({ message: 'Error en el inicio de sesión.', error: error.message });
+    }
 };
 
-// Obtiene los datos del usuario logueado
-exports.getMe = (req, res) => {
-        const userId = req.user.uid;
-    console.log('Buscando usuario en la BD con id:', userId);
-    db.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId], (error, results) => {
-        console.log('Resultado de la consulta:', results, 'Error:', error);
-        if (error || results.length === 0) {
-            return res.status(404).json({ message: "Usuario no encontrado." });
-        }
-        res.status(200).json(results[0]);
+// --- OBTENER PERFIL DE USUARIO ---
+exports.getMe = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, email: true, role: true }
     });
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado." });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el perfil.', error: error.message });
+  }
 };
