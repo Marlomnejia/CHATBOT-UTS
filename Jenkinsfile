@@ -18,28 +18,27 @@ pipeline {
             }
         }
 
+
         stage('Test') {
             steps {
-                bat 'npm test'
+                bat 'npm run test'
             }
         }
 
-        stage('Deploy with PM2') {
+        stage('Deploy') {
             steps {
-                bat 'pm2 delete chatbot-uts || exit 0'
-                bat 'pm2 start src/app.js --name chatbot-uts'
-                bat 'pm2 save'
+                echo "🚀 Lanzando la aplicación..."
+                bat 'start cmd /c "npm run start"'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline completado correctamente 🚀'
-            bat 'pm2 list'
+            echo "✅ Pipeline completado con éxito"
         }
         failure {
-            echo '❌ Hubo un fallo en el pipeline, revisa la consola.'
+            echo "❌ El pipeline falló. Revisa la salida de consola."
         }
     }
 }
