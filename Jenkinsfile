@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS"  
+        nodejs "NodeJS"
     }
 
     stages {
@@ -18,16 +18,28 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Test') {
             steps {
-                sh 'npm run build'
+                bat 'npm test'
             }
         }
 
-        stage('Test') {
+        stage('Deploy with PM2') {
             steps {
-                bat 'npx cypress run'
+                bat 'pm2 delete chatbot-uts || exit 0'
+                bat 'pm2 start src/app.js --name chatbot-uts'
+                bat 'pm2 save'
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Pipeline completado correctamente 🚀'
+            bat 'pm2 list'
+        }
+        failure {
+            echo '❌ Hubo un fallo en el pipeline, revisa la consola.'
         }
     }
 }
