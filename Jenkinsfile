@@ -1,73 +1,65 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs 'NodeJS'
-    }
-
     environment {
         DOCKER_COMPOSE = 'docker-compose'
-        APP_URL = 'http://localhost:3000'
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Preparar Workspace') {
             steps {
-                echo '📥 Clonando repositorio...'
-                git branch: 'main', url: 'https://github.com/Marlomnejia/CHATBOT-UTS.git'
+                echo "🧹 Limpiando workspace y contenedores antiguos..."
+                bat "${env.DOCKER_COMPOSE} down --volumes --remove-orphans || echo 'No hay contenedores que eliminar'"
             }
         }
 
-        stage('Docker Build') {
+        stage('Checkout SCM') {
             steps {
-                echo '🐳 Construyendo imágenes Docker...'
-                bat "${DOCKER_COMPOSE} down"
-                bat "${DOCKER_COMPOSE} build"
+                echo "🔄 Clonando repositorio..."
+                git url: 'https://github.com/Marlomnejia/CHATBOT-UTS.git', branch: 'main'
             }
         }
 
-        stage('Docker Up') {
+        stage('Instalar Herramientas') {
             steps {
-                echo '🚀 Levantando contenedores...'
-                bat "${DOCKER_COMPOSE} up -d"
-
-                echo '⏳ Esperando a que la app responda...'
-                // Espera activa hasta que el puerto 3000 responda
-                bat '''
-                for /l %%i in (1,1,30) do (
-                    curl -s http://localhost:3000 >nul 2>&1
-                    IF %ERRORLEVEL% EQU 0 (
-                        echo ✅ La app está levantada.
-                        exit /b 0
-                    )
-                    echo "⏳ Esperando que la app esté lista (intento %%i)..."
-                    timeout /t 2 >nul
-                )
-                echo ❌ La app no respondió a tiempo.
-                exit /b 1
-                '''
+                echo "⚙️ Instalando dependencias de Node..."
+                bat 'npm install'
             }
         }
 
-        stage('Run Tests') {
+        stage('Construir Docker') {
             steps {
-                echo '🧪 Ejecutando tests Cypress...'
-                bat 'npm install' // por si Cypress está como devDependency
-                bat 'npx cypress run'
+                echo "🚀 Construyendo imágenes Docker..."
+                bat "${env.DOCKER_COMPOSE} build --no-cache"
+            }
+        }
+
+        stage('Levantar contenedores') {
+            steps {
+                echo "📦 Levantando contenedores..."
+                bat "${env.DOCKER_COMPOSE} up -d"
+            }
+        }
+
+        stage('Ejecutar Tests') {
+            steps {
+                echo "🧪 Ejecutando tests..."
+                bat 'npm test'
             }
         }
     }
 
     post {
         always {
-            echo '🧹 Limpiando contenedores...'
-            bat "${DOCKER_COMPOSE} down"
+            echo "🧹 Limpiando contenedores y red..."
+            bat "${env.DOCKER_COMPOSE} down --volumes --remove-orphans || echo 'No hay contenedores que eliminar'"
         }
         success {
-            echo "✅ Pipeline completado con éxito en entorno Docker 🎉"
+            echo "✅ Pipeline completado correctamente."
         }
         failure {
-            echo "❌ El pipeline falló. Revisa la salida de Jenkins."
+            echo "❌ Pipeline falló. Revisa los logs."
         }
     }
 }
