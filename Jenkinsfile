@@ -5,6 +5,11 @@ pipeline {
         nodejs "NodeJS"
     }
 
+    environment {
+        DOCKER_COMPOSE = 'docker-compose'
+        APP_CONTAINER = 'chatbot-uts'  // nombre de tu contenedor Node en docker-compose.yml
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -18,18 +23,38 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
                 bat 'npm run test'
             }
         }
 
-        stage('Deploy') {
+        stage('Docker Build') {
             steps {
-                echo "🚀 Lanzando la aplicación localmente..."
-                bat 'start cmd /c "npm run start"'
-                sleep time: 5, unit: 'SECONDS'
-                echo "✅ Aplicación levantada localmente"
+                echo "🐳 Construyendo imágenes Docker..."
+                bat "${DOCKER_COMPOSE} down"
+                bat "${DOCKER_COMPOSE} build"
+            }
+        }
+
+        stage('Run Prisma Migrations') {
+            steps {
+                echo "🛠️ Ejecutando migraciones de Prisma dentro del contenedor..."
+                // Levantamos solo la base de datos para que Prisma pueda conectarse
+                bat "${DOCKER_COMPOSE} up -d chatbot-mysql"
+
+                // Pequeña pausa para que la base de datos termine de inicializarse
+                sleep time: 10, unit: 'SECONDS'
+
+                // Ejecutamos las migraciones dentro del contenedor de la app
+                bat "docker exec ${APP_CONTAINER} npx prisma migrate deploy"
+            }
+        }
+
+        stage('Docker Deploy') {
+            steps {
+                echo "🚀 Levantando todos los contenedores..."
+                bat "${DOCKER_COMPOSE} up -d"
             }
         }
 
@@ -51,7 +76,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completado con éxito"
+            echo "✅ Pipeline completado con éxito — App levantada, migraciones aplicadas y todo en Docker 🎉"
         }
         failure {
             echo "❌ El pipeline falló. Revisa la salida de consola."
