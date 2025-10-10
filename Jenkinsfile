@@ -1,70 +1,60 @@
 pipeline {
     agent any
 
-    environment {
-        // Usamos el .env.example como archivo de variables
-        DOTENV_FILE = ".env.example"
+    tools {
+        nodejs "NodeJS"
     }
 
     stages {
-        stage('Preparar Workspace') {
+        stage('Checkout') {
             steps {
-                echo '🧹 Limpiando workspace y contenedores antiguos...'
-                bat """
-                docker-compose down --rmi all --volumes --remove-orphans || echo 'No hay contenedores que eliminar'
-                """
+                git branch: 'main', url: 'https://github.com/Marlomnejia/CHATBOT-UTS.git'
             }
         }
 
-        stage('Checkout SCM') {
+        stage('Install dependencies') {
             steps {
-                echo '🔄 Clonando repositorio...'
-                checkout scm
-            }
-        }
-
-        stage('Instalar Dependencias') {
-            steps {
-                echo '⚙️ Instalando dependencias de Node...'
                 bat 'npm install'
             }
         }
 
-        stage('Construir Docker') {
+        stage('Test') {
             steps {
-                echo '🛠️ Construyendo imágenes Docker...'
-                bat "docker-compose build --no-cache --env-file %DOTENV_FILE%"
+                bat 'npm run test'
             }
         }
 
-        stage('Levantar contenedores') {
+        stage('Deploy') {
             steps {
-                echo '📦 Levantando contenedores...'
-                bat "docker-compose up -d --env-file %DOTENV_FILE%"
+                echo "🚀 Lanzando la aplicación localmente..."
+                bat 'start cmd /c "npm run start"'
+                sleep time: 5, unit: 'SECONDS'
+                echo "✅ Aplicación levantada localmente"
             }
         }
 
-        stage('Ejecutar Tests') {
+        stage('Verify') {
             steps {
-                echo '🧪 Ejecutando tests...'
-                // Aquí puedes poner los comandos de tus tests, por ejemplo:
-                bat "npm test || echo 'Tests fallaron, pero seguimos'"
+                echo "🔍 Verificando que la aplicación esté levantada..."
+                bat '''
+                curl -s http://localhost:3000 >nul
+                IF %ERRORLEVEL% NEQ 0 (
+                    echo ❌ La aplicación no respondió correctamente.
+                    exit /b 1
+                ) ELSE (
+                    echo ✅ Aplicación verificada correctamente.
+                )
+                '''
             }
         }
     }
 
     post {
-        always {
-            echo '🧹 Limpiando contenedores y red...'
-            bat "docker-compose down --volumes --remove-orphans || echo 'No hay contenedores que eliminar'"
-        }
-
         success {
-            echo '✅ Pipeline completado con éxito.'
+            echo "✅ Pipeline completado con éxito"
         }
-
         failure {
-            echo '❌ Pipeline falló. Revisa los logs.'
+            echo "❌ El pipeline falló. Revisa la salida de consola."
         }
     }
 }
