@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  chatbot-mysql:
+    image: mysql:8.0
+    container_name: chatbot-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Marlon123
+      MYSQL_DATABASE: chatbot_uts_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./chatbot_uts_db.sql:/docker-entrypoint-initdb.d/chatbot_uts_db.sql
+
+  chatbot-uts:
+    build: .
+    container_name: chatbot-uts
+    restart: always
+    depends_on:
+      - chatbot-mysql
+    ports:
+      - "3000:3000"
+    env_file:              # 👈 Aquí se cargan todas las variables desde tu .env
+      - .env
+    environment:
+      DATABASE_URL: mysql://root:Marlon123@chatbot-mysql:3306/chatbot_uts_db
+      NODE_ENV: production
+      JWT_SECRET: supersecreto123  # 👈 por seguridad, puedes mover esto también al .env si prefieres
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: chatbot-phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: chatbot-mysql
+      MYSQL_ROOT_PASSWORD: Marlon123
+
+volumes:
+  db_data:

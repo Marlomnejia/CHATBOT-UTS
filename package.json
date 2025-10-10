@@ -6,7 +6,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "test": "cypress run",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "docker": "docker compose up -d --build && start http://localhost:3000"
   },
   "keywords": [],
   "author": "",
