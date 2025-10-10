@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         DOCKER_COMPOSE = 'docker-compose'
-        APP_CONTAINER = 'chatbot-uts'  // nombre de tu contenedor Node en docker-compose.yml
+        APP_CONTAINER = 'chatbot-uts'  // nombre del contenedor Node en docker-compose.yml
     }
 
     stages {
@@ -25,22 +25,14 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                bat '''
-                npm run test
-                IF %ERRORLEVEL% NEQ 0 (
-                    echo ⚠️ Tests terminaron con warnings o errores no fatales, continuando pipeline...
-                    exit /b 0
-                )
-                '''
+                bat 'npm run test'
             }
         }
 
         stage('Docker Build') {
             steps {
                 echo "🐳 Construyendo imágenes Docker..."
-                // Bajamos y limpiamos contenedores antiguos, si los hay
-                bat "${DOCKER_COMPOSE} down -v || exit 0"
-                // Construimos imágenes nuevas
+                bat "${DOCKER_COMPOSE} down"
                 bat "${DOCKER_COMPOSE} build"
             }
         }
@@ -48,13 +40,17 @@ pipeline {
         stage('Run Prisma Migrations') {
             steps {
                 echo "🛠️ Ejecutando migraciones de Prisma dentro del contenedor..."
-                // Levantamos solo la base de datos para que Prisma pueda conectarse
+
+                // 🧹 Elimina contenedor de MySQL previo si existe
+                bat 'docker rm -f chatbot-mysql || exit 0'
+
+                // Levanta solo la base de datos
                 bat "${DOCKER_COMPOSE} up -d chatbot-mysql"
 
-                // Pausa para que MySQL termine de inicializarse
+                // Espera a que la DB esté lista
                 sleep time: 10, unit: 'SECONDS'
 
-                // Ejecutamos las migraciones dentro del contenedor de la app
+                // Ejecuta migraciones Prisma dentro del contenedor Node
                 bat "docker exec ${APP_CONTAINER} npx prisma migrate deploy"
             }
         }
