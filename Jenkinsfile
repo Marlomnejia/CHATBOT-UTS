@@ -41,16 +41,29 @@ pipeline {
             steps {
                 echo "🛠️ Ejecutando migraciones de Prisma dentro del contenedor..."
 
-                // 🧹 Elimina contenedor de MySQL previo si existe
+                // 🧹 Elimina contenedores previos para evitar conflictos de nombre
                 bat 'docker rm -f chatbot-mysql || exit 0'
+                bat 'docker rm -f chatbot-uts || exit 0'
 
-                // Levanta solo la base de datos
-                bat "${DOCKER_COMPOSE} up -d chatbot-mysql"
+                // 🚀 Levanta base de datos y la app en segundo plano
+                bat "${DOCKER_COMPOSE} up -d chatbot-mysql chatbot-uts"
 
-                // Espera a que la DB esté lista
-                sleep time: 10, unit: 'SECONDS'
+                // ⏳ Espera activa a que MySQL esté listo para aceptar conexiones
+                bat '''
+                echo "⏳ Esperando a que MySQL acepte conexiones..."
+                for /l %%i in (1,1,20) do (
+                    docker exec chatbot-mysql mysqladmin ping -h "127.0.0.1" --silent
+                    IF %ERRORLEVEL% EQU 0 (
+                        echo ✅ MySQL está listo.
+                        exit /b 0
+                    )
+                    timeout /t 2 >nul
+                )
+                echo ❌ MySQL no se levantó a tiempo.
+                exit /b 1
+                '''
 
-                // Ejecuta migraciones Prisma dentro del contenedor Node
+                // 🧠 Ahora que la DB está lista y la app corriendo, aplicamos migraciones
                 bat "docker exec ${APP_CONTAINER} npx prisma migrate deploy"
             }
         }
